@@ -285,23 +285,15 @@ async function loadGameData() {
     console.log('开始加载游戏数据...');
 
     try {
-        const [items, buildings, recipes, technologies, units, enemies, regions] = await Promise.all([
-            fetch('data/items.json').then(r => r.json()),
-            fetch('data/buildings.json').then(r => r.json()),
-            fetch('data/recipes.json').then(r => r.json()),
-            fetch('data/technologies.json').then(r => r.json()),
-            fetch('data/units.json').then(r => r.json()),
-            fetch('data/enemies.json').then(r => r.json()),
-            fetch('data/regions.json').then(r => r.json())
-        ]);
+        const data = await fetch('data.json').then(r => r.json());
 
-        GameData.items = items.items;
-        GameData.buildings = buildings.buildings;
-        GameData.recipes = recipes.recipes;
-        GameData.technologies = technologies.technologies;
-        GameData.units = units.units;
-        GameData.enemies = enemies.enemies;
-        GameData.regionTemplates = regions.regions;
+        GameData.items = data.items;
+        GameData.buildings = data.buildings;
+        GameData.recipes = data.recipes;
+        GameData.technologies = data.technologies;
+        GameData.units = data.units;
+        GameData.enemies = data.enemies;
+        GameData.regionTemplates = data.regions;
         GameData.loaded = true;
 
         console.log('游戏数据加载完成！');
