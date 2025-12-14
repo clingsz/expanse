@@ -295,63 +295,27 @@
                 </div>
             </div>
 
-            <!-- 战斗中状态 -->
+            <!-- 战斗中状态 (Grid-Based Battle) -->
             <div id="military-battle-view" style="display:none">
                 <div class="screen-header">
-                    <h1>【战斗中】<span id="battle-screen-region-name"></span> - 自动进行中</h1>
+                    <h1>⚔ 战斗：<span id="battle-region-name-display"></span></h1>
                 </div>
                 <div class="screen-content">
-                    <!-- 血量对比条 -->
-                    <section class="info-panel compact">
-                        <div class="battle-hp-comparison">
-                            <div class="battle-hp-bar-container">
-                                <div class="battle-hp-bar">
-                                    <div id="battle-player-hp-bar" class="battle-hp-fill player"></div>
-                                </div>
-                            </div>
-                            <div class="battle-hp-stats">
-                                <div class="battle-hp-label">我方：<span id="battle-player-hp-text">0/0</span></div>
-                                <div class="battle-hp-label">敌方：<span id="battle-enemy-hp-text">0/0</span></div>
-                            </div>
-                        </div>
-                    </section>
+                    <!-- Battle Status Bar -->
+                    <div id="battle-status-container-military"></div>
 
-                    <!-- 两列式编队 -->
-                    <section class="info-panel compact">
-                        <div class="battle-formations-container">
-                            <div class="battle-formation-column">
-                                <h3>━━━ 我方编队 ━━━</h3>
-                                <div id="battle-player-formation" class="battle-formation-list"></div>
-                            </div>
-                            <div class="battle-formation-column">
-                                <h3>━━━ 敌方 ━━━</h3>
-                                <div id="battle-enemy-formation" class="battle-formation-list"></div>
-                            </div>
-                        </div>
-                    </section>
+                    <!-- Battle Grid (4x4) -->
+                    <div id="battle-grid-container-military" class="buildings-grid-container">
+                        <div id="buildings-grid-4x4-military" class="buildings-grid-4x4"></div>
+                    </div>
 
-                    <!-- 战斗效率 -->
-                    <section class="info-panel compact">
-                        <h3>战斗效率</h3>
-                        <div class="battle-dps-info">
-                            <div>我方 DPS：<span id="battle-player-dps">0</span>/秒</div>
-                            <div>敌方 DPS：<span id="battle-enemy-dps">0</span>/秒</div>
-                        </div>
-                    </section>
+                    <!-- Deployment Buttons -->
+                    <div id="deployment-buttons-container-military"></div>
 
-                    <!-- 弹药消耗 -->
-                    <section class="info-panel compact">
-                        <h3>弹药消耗</h3>
-                        <div id="battle-ammo-info" class="battle-ammo-list"></div>
-                    </section>
-
-                    <!-- 战斗时间和操作 -->
-                    <section class="info-panel compact">
-                        <div class="battle-time-actions">
-                            <div class="battle-time">战斗时间：<span id="battle-time-display">00:00</span></div>
-                            <button class="btn btn-cancel" onclick="retreatFromBattle()">撤退</button>
-                        </div>
-                    </section>
+                    <!-- Back Button -->
+                    <div style="margin-top: 10px;">
+                        <button class="btn btn-cancel" onclick="showScreen('map')">← 返回地图</button>
+                    </div>
                 </div>
             </div>
         </div>
