@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>扩张前线 - Expansion Front</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 主菜单 -->
+    <div id="main-menu" class="main-menu">
+        <div class="main-menu-content">
+            <h1 class="main-menu-title">扩张前线</h1>
+            <h2 class="main-menu-subtitle">EXPANSION FRONT</h2>
+
+            <div class="main-menu-buttons">
+                <button class="menu-btn menu-btn-primary" onclick="startNewGame()">
+                    <span class="menu-btn-icon">🚀</span>
+                    <span class="menu-btn-text">新游戏</span>
+                </button>
+
+                <button class="menu-btn menu-btn-secondary" onclick="showLoadMenu()">
+                    <span class="menu-btn-icon">💾</span>
+                    <span class="menu-btn-text">读取存档</span>
+                </button>
+
+                <button class="menu-btn menu-btn-tertiary" onclick="showSettings()">
+                    <span class="menu-btn-icon">⚙️</span>
+                    <span class="menu-btn-text">设置</span>
+                </button>
+            </div>
+
+            <div class="main-menu-footer">
+                <p>按 ESC 打开游戏菜单</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 读取存档菜单 -->
+    <div id="load-menu" class="main-menu" style="display:none;">
+        <div class="main-menu-content">
+            <h1 class="main-menu-title">读取存档</h1>
+
+            <div class="save-slots-container" id="save-slots-list">
+                <!-- 动态生成存档槽位 -->
+            </div>
+
+            <button class="menu-btn menu-btn-secondary" onclick="backToMainMenu()">
+                <span class="menu-btn-icon">←</span>
+                <span class="menu-btn-text">返回</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 选择存档槽位菜单（新游戏/保存） -->
+    <div id="slot-select-menu" class="main-menu" style="display:none;">
+        <div class="main-menu-content">
+            <h1 class="main-menu-title" id="slot-select-title">选择存档槽位</h1>
+
+            <div class="save-slots-container" id="slot-select-list">
+                <!-- 动态生成存档槽位 -->
+            </div>
+
+            <button class="menu-btn menu-btn-secondary" onclick="cancelSlotSelect()">
+                <span class="menu-btn-icon">×</span>
+                <span class="menu-btn-text">取消</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="app" style="display:none;">
+        <!-- 区域界面 (主界面) -->
+        <div id="region-screen" class="screen">
+            <!-- 第一行：全局信息栏 -->
+            <div class="global-toolbar">
+                <div class="toolbar-item time-display">⏰ <span id="game-time">08:00am</span></div>
+                <div class="toolbar-item power-display power-status-item" id="power-status-item">
+                    ⚡ <span id="power-load">0%</span>
+                </div>
+                <button class="toolbar-btn resource-btn" onclick="showResourceNodesModal()" title="区域资源">
+                    📦 <span id="total-resources">0</span>
+                </button>
+                <button class="toolbar-btn nav-btn" onclick="switchToPreviousRegion()" title="上一区域">◀</button>
+                <span class="toolbar-region-name" id="current-region-name">区域 1</span>
+                <button class="toolbar-btn nav-btn" onclick="switchToNextRegion()" title="下一区域">▶</button>
+                <button class="toolbar-btn stats-btn" onclick="toggleProductionStats()" title="生产统计">📊</button>
+            </div>
+
+            <!-- 生产统计（可折叠） -->
+            <div id="production-stats-section" class="production-stats-section" style="display:none;">
+                <div id="production-stats" class="production-stats-inline">
+                    <div class="stats-message">暂无生产活动</div>
+                </div>
+            </div>
+
+            <!-- 第二行：资源栏 - 两行显示 -->
+            <div class="resources-bar-v2">
+                <div class="resources-grid-v2">
+                    <div class="resource-item-v2">
+                        <div class="res-label">铁矿</div>
+                        <div class="res-value" id="res-iron-ore">0</div>
+                    </div>
+                    <div class="resource-item-v2">
+                        <div class="res-label">铜矿</div>
+                        <div class="res-value" id="res-copper-ore">0</div>
+                    </div>
+                    <div class="resource-item-v2">
+                        <div class="res-label">铁板</div>
+                        <div class="res-value" id="res-iron">0</div>
+                    </div>
+                    <div class="resource-item-v2">
+                        <div class="res-label">铜板</div>
+                        <div class="res-value" id="res-copper">0</div>
+                    </div>
+                    <div class="resource-item-v2">
+                        <div class="res-label">钢板</div>
+                        <div class="res-value" id="res-steel">0</div>
+                    </div>
+                    <div class="resource-item-v2">
+                        <div class="res-label">石材</div>
+                        <div class="res-value" id="res-stone">0</div>
+                    </div>
+                    <div class="resource-item-v2">
+                        <div class="res-label">煤</div>
+                        <div class="res-value" id="res-coal">0</div>
+                    </div>
+                    <div class="resource-item-v2">
+                        <div class="res-label">齿轮</div>
+                        <div class="res-value" id="res-gear">0</div>
+                    </div>
+                    <div class="resource-item-v2">
+                        <div class="res-label">电路</div>
+                        <div class="res-value" id="res-circuit">0</div>
+                    </div>
+                </div>
+                <button class="resources-bar-btn" onclick="showScreen('storage')" title="打开仓库">仓库 →</button>
+            </div>
+
+            <!-- 建筑网格（4x4，空槽位显示+）-->
+            <div class="buildings-container">
+                <div id="buildings-grid-4x4" class="buildings-grid-4x4">
+                    <div class="empty-message">加载中...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 建造界面 -->
+        <div id="build-screen" class="screen" style="display:none">
+            <div class="screen-header">
+                <h1>建造 - <span id="build-region-name">区域 1</span></h1>
+            </div>
+
+            <div class="screen-content">
+                <div class="build-info-compact">
+                    <div class="build-info-box">槽位 <span id="build-slots-remaining">16</span>/<span id="build-slots-total">16</span></div>
+                </div>
+
+                <!-- 采集建筑 -->
+                <section class="build-category">
+                    <h2>【采集建筑】</h2>
+                    <div id="mining-buildings" class="building-cards"></div>
+                </section>
+
+                <!-- 生产建筑 -->
+                <section class="build-category">
+                    <h2>【生产建筑】</h2>
+                    <div id="production-buildings" class="building-cards"></div>
+                </section>
+
+                <!-- 能源建筑 -->
+                <section class="build-category">
+                    <h2>【能源建筑】</h2>
+                    <div id="power-buildings" class="building-cards"></div>
+                </section>
+
+                <!-- 科研建筑 -->
+                <section class="build-category">
+                    <h2>【科研建筑】</h2>
+                    <div id="science-buildings" class="building-cards"></div>
+                </section>
+
+                <!-- 仓储建筑 -->
+                <section class="build-category">
+                    <h2>【仓储建筑】</h2>
+                    <div id="storage-buildings" class="building-cards"></div>
+                </section>
+            </div>
+        </div>
+
+        <!-- 科技树界面 -->
+        <div id="tech-screen" class="screen" style="display:none">
+            <div class="screen-header">
+                <h1>科技树</h1>
+            </div>
+            <div class="screen-content">
+                <div id="tech-tree-container"></div>
+            </div>
+        </div>
+
+        <!-- 仓库界面 -->
+        <div id="storage-screen" class="screen" style="display:none">
+            <div class="screen-header">
+                <h1>仓库管理</h1>
+            </div>
+            <div class="screen-content">
+                <!-- 仓库统计 -->
+                <section class="info-panel compact">
+                    <h2>【仓库统计】</h2>
+                    <div class="info-grid-compact">
+                        <div>仓库数量 <span id="warehouse-count">0</span></div>
+                        <div>基础容量 <span id="base-capacity">500</span></div>
+                        <div>额外容量 <span id="bonus-capacity">0</span></div>
+                        <div>总容量 <span id="total-capacity">500</span></div>
+                    </div>
+                </section>
+
+                <!-- 资源列表 -->
+                <section class="info-panel">
+                    <h2>【资源库存】</h2>
+                    <div id="storage-resources-list" class="storage-resources-list"></div>
+                </section>
+            </div>
+        </div>
+
+        <!-- 地图界面 -->
+        <div id="map-screen" class="screen" style="display:none">
+            <div class="screen-header">
+                <h1>地图 - 已占领 <span id="conquered-count">1</span>/16</h1>
+            </div>
+            <div class="screen-content">
+                <div id="regions-grid" class="regions-grid-compact"></div>
+            </div>
+        </div>
+
+        <!-- 军事界面（集成战斗准备和战斗） -->
+        <div id="military-screen" class="screen" style="display:none">
+            <!-- 非战斗状态：显示部队和弹药 -->
+            <div id="military-idle-view">
+                <div class="screen-header">
+                    <h1>军事管理</h1>
+                </div>
+                <div class="screen-content">
+                    <!-- 战力信息 -->
+                    <div class="military-power-compact">
+                        <div class="power-item">总战力 <span id="total-battle-power">0</span></div>
+                        <div class="power-item">无人机容量 <span id="drone-current">0</span>/<span id="drone-capacity">0</span></div>
+                    </div>
+
+                    <!-- 部队列表 -->
+                    <section class="info-panel compact">
+                        <h2>【部队】</h2>
+                        <div id="military-units-list" class="military-units-grid"></div>
+                    </section>
+
+                    <!-- 弹药库存 -->
+                    <section class="info-panel compact">
+                        <h2>【弹药】</h2>
+                        <div id="military-ammo-list" class="military-ammo-grid"></div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- 战斗准备状态 -->
+            <div id="military-prep-view" style="display:none">
+                <div class="screen-header">
+                    <h1>战斗准备 - <span id="battle-region-name"></span></h1>
+                </div>
+                <div class="screen-content">
+                    <!-- 敌方阵容 -->
+                    <section class="info-panel compact">
+                        <h2>【敌方阵容】</h2>
+                        <div id="enemy-formation" class="formation-grid enemy-formation"></div>
+                    </section>
+
+                    <!-- 我方阵容 -->
+                    <section class="info-panel compact">
+                        <h2>【我方阵容】</h2>
+                        <div id="player-formation" class="formation-grid player-formation"></div>
+                    </section>
+
+                    <!-- 可用单位 -->
+                    <section class="info-panel compact">
+                        <h2>【可用单位】</h2>
+                        <div id="available-units" class="available-units-list"></div>
+                    </section>
+
+                    <!-- 操作按钮 -->
+                    <section class="info-panel compact">
+                        <div class="battle-prep-actions">
+                            <button class="btn btn-confirm" onclick="startBattle()">⚔ 开始战斗</button>
+                            <button class="btn btn-cancel" onclick="closeBattlePrep()">← 返回</button>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- 战斗中状态 -->
+            <div id="military-battle-view" style="display:none">
+                <div class="screen-header">
+                    <h1>【战斗中】<span id="battle-screen-region-name"></span> - 自动进行中</h1>
+                </div>
+                <div class="screen-content">
+                    <!-- 血量对比条 -->
+                    <section class="info-panel compact">
+                        <div class="battle-hp-comparison">
+                            <div class="battle-hp-bar-container">
+                                <div class="battle-hp-bar">
+                                    <div id="battle-player-hp-bar" class="battle-hp-fill player"></div>
+                                </div>
+                            </div>
+                            <div class="battle-hp-stats">
+                                <div class="battle-hp-label">我方：<span id="battle-player-hp-text">0/0</span></div>
+                                <div class="battle-hp-label">敌方：<span id="battle-enemy-hp-text">0/0</span></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 两列式编队 -->
+                    <section class="info-panel compact">
+                        <div class="battle-formations-container">
+                            <div class="battle-formation-column">
+                                <h3>━━━ 我方编队 ━━━</h3>
+                                <div id="battle-player-formation" class="battle-formation-list"></div>
+                            </div>
+                            <div class="battle-formation-column">
+                                <h3>━━━ 敌方 ━━━</h3>
+                                <div id="battle-enemy-formation" class="battle-formation-list"></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 战斗效率 -->
+                    <section class="info-panel compact">
+                        <h3>战斗效率</h3>
+                        <div class="battle-dps-info">
+                            <div>我方 DPS：<span id="battle-player-dps">0</span>/秒</div>
+                            <div>敌方 DPS：<span id="battle-enemy-dps">0</span>/秒</div>
+                        </div>
+                    </section>
+
+                    <!-- 弹药消耗 -->
+                    <section class="info-panel compact">
+                        <h3>弹药消耗</h3>
+                        <div id="battle-ammo-info" class="battle-ammo-list"></div>
+                    </section>
+
+                    <!-- 战斗时间和操作 -->
+                    <section class="info-panel compact">
+                        <div class="battle-time-actions">
+                            <div class="battle-time">战斗时间：<span id="battle-time-display">00:00</span></div>
+                            <button class="btn btn-cancel" onclick="retreatFromBattle()">撤退</button>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部Tab栏 -->
+        <div id="tab-bar">
+            <button class="tab-button active" onclick="showScreen('region')">区域</button>
+            <button class="tab-button" onclick="showScreen('build')">建造</button>
+            <button class="tab-button" onclick="showScreen('tech')">科技</button>
+            <button class="tab-button" onclick="showScreen('military')">军事</button>
+            <button class="tab-button" onclick="showScreen('storage')">仓库</button>
+            <button class="tab-button" onclick="showScreen('map')">地图</button>
+        </div>
+
+        <!-- 快捷操作按钮（右下角）-->
+        <div id="quick-actions">
+            <button class="quick-btn" onclick="showInGameMenu()" title="游戏菜单 (ESC)">☰</button>
+        </div>
+
+        <!-- Toast通知容器 -->
+        <div id="toast-container"></div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

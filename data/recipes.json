@@ -1,0 +1,392 @@
+{
+  "recipes": {
+    "iron-plate": {
+      "id": "iron-plate",
+      "name": "冶炼铁板",
+      "category": "smelting",
+      "buildingTypes": ["furnace", "electric-furnace"],
+      "time": 1,
+      "ingredients": {
+        "iron-ore": 1
+      },
+      "results": {
+        "iron-plate": 1
+      },
+      "requiresTech": null
+    },
+    "copper-plate": {
+      "id": "copper-plate",
+      "name": "冶炼铜板",
+      "category": "smelting",
+      "buildingTypes": ["furnace", "electric-furnace"],
+      "time": 1,
+      "ingredients": {
+        "copper-ore": 1
+      },
+      "results": {
+        "copper-plate": 1
+      },
+      "requiresTech": null
+    },
+    "steel-plate": {
+      "id": "steel-plate",
+      "name": "冶炼钢板",
+      "category": "smelting",
+      "buildingTypes": ["furnace", "electric-furnace"],
+      "time": 5,
+      "ingredients": {
+        "iron-plate": 5
+      },
+      "results": {
+        "steel-plate": 1
+      },
+      "requiresTech": "steel-production"
+    },
+    "gear": {
+      "id": "gear",
+      "name": "齿轮",
+      "category": "crafting",
+      "buildingTypes": ["assembler-mk1", "assembler-mk2", "assembler-mk3"],
+      "time": 1,
+      "ingredients": {
+        "iron-plate": 2
+      },
+      "results": {
+        "gear": 1
+      },
+      "requiresTech": null
+    },
+    "circuit": {
+      "id": "circuit",
+      "name": "电路板",
+      "category": "crafting",
+      "buildingTypes": ["assembler-mk1", "assembler-mk2", "assembler-mk3"],
+      "time": 2,
+      "ingredients": {
+        "iron-plate": 1,
+        "copper-plate": 1
+      },
+      "results": {
+        "circuit": 1
+      },
+      "requiresTech": null
+    },
+    "advanced-circuit": {
+      "id": "advanced-circuit",
+      "name": "高级电路板",
+      "category": "crafting",
+      "buildingTypes": ["assembler-mk2", "assembler-mk3"],
+      "time": 5,
+      "ingredients": {
+        "circuit": 2,
+        "plastic": 4,
+        "copper-plate": 8
+      },
+      "results": {
+        "advanced-circuit": 1
+      },
+      "requiresTech": "advanced-electronics"
+    },
+    "plastic": {
+      "id": "plastic",
+      "name": "塑料",
+      "category": "chemical",
+      "buildingTypes": ["chemical-plant"],
+      "time": 5,
+      "ingredients": {
+        "crude-oil": 10
+      },
+      "results": {
+        "plastic": 2
+      },
+      "requiresTech": "plastic-production"
+    },
+    "oil-refining": {
+      "id": "oil-refining",
+      "name": "石油精炼",
+      "category": "chemical",
+      "buildingTypes": ["chemical-plant"],
+      "time": 3,
+      "ingredients": {
+        "crude-oil": 10
+      },
+      "results": {
+        "heavy-oil": 5,
+        "light-oil": 5
+      },
+      "requiresTech": "chemical-tech"
+    },
+    "battery": {
+      "id": "battery",
+      "name": "电池",
+      "category": "chemical",
+      "buildingTypes": ["chemical-plant"],
+      "time": 3,
+      "ingredients": {
+        "iron-plate": 2,
+        "copper-plate": 2,
+        "sulfuric-acid": 5
+      },
+      "results": {
+        "battery": 1
+      },
+      "requiresTech": "battery-production"
+    },
+    "sulfuric-acid": {
+      "id": "sulfuric-acid",
+      "name": "硫酸",
+      "category": "chemical",
+      "buildingTypes": ["chemical-plant"],
+      "time": 1,
+      "ingredients": {
+        "coal": 1
+      },
+      "results": {
+        "sulfuric-acid": 5
+      },
+      "requiresTech": "sulfuric-acid-production"
+    },
+    "normal-bullet": {
+      "id": "normal-bullet",
+      "name": "普通子弹",
+      "category": "military",
+      "buildingTypes": ["assembler-mk1", "assembler-mk2", "assembler-mk3"],
+      "time": 1,
+      "ingredients": {
+        "iron-plate": 1
+      },
+      "results": {
+        "normal-bullet": 10
+      },
+      "requiresTech": "basic-military"
+    },
+    "piercing-bullet": {
+      "id": "piercing-bullet",
+      "name": "穿甲弹",
+      "category": "military",
+      "buildingTypes": ["assembler-mk1", "assembler-mk2", "assembler-mk3"],
+      "time": 2,
+      "ingredients": {
+        "iron-plate": 2,
+        "steel-plate": 1
+      },
+      "results": {
+        "piercing-bullet": 5
+      },
+      "requiresTech": "piercing-ammo"
+    },
+    "explosive-bullet": {
+      "id": "explosive-bullet",
+      "name": "爆炸弹",
+      "category": "military",
+      "buildingTypes": ["assembler-mk1", "assembler-mk2", "assembler-mk3"],
+      "time": 3,
+      "ingredients": {
+        "steel-plate": 1,
+        "coal": 2
+      },
+      "results": {
+        "explosive-bullet": 3
+      },
+      "requiresTech": "explosives"
+    },
+    "laser-charge": {
+      "id": "laser-charge",
+      "name": "激光充能包",
+      "category": "military",
+      "buildingTypes": ["assembler-mk1", "assembler-mk2", "assembler-mk3"],
+      "time": 2,
+      "ingredients": {
+        "steel-plate": 2,
+        "battery": 1
+      },
+      "results": {
+        "laser-charge": 5
+      },
+      "requiresTech": "laser-weapons"
+    },
+    "machinegun-drone": {
+      "id": "machinegun-drone",
+      "name": "机枪无人机",
+      "category": "military",
+      "buildingTypes": ["assembler-mk1", "assembler-mk2", "assembler-mk3"],
+      "time": 10,
+      "ingredients": {
+        "iron-plate": 5,
+        "circuit": 2
+      },
+      "results": {
+        "machinegun-drone": 1
+      },
+      "requiresTech": "basic-military"
+    },
+    "heavy-machinegun-drone": {
+      "id": "heavy-machinegun-drone",
+      "name": "重机枪无人机",
+      "category": "military",
+      "buildingTypes": ["assembler-mk1", "assembler-mk2", "assembler-mk3"],
+      "time": 15,
+      "ingredients": {
+        "steel-plate": 10,
+        "circuit": 5
+      },
+      "results": {
+        "heavy-machinegun-drone": 1
+      },
+      "requiresTech": "piercing-ammo"
+    },
+    "flamethrower-drone": {
+      "id": "flamethrower-drone",
+      "name": "喷火无人机",
+      "category": "military",
+      "buildingTypes": ["assembler-mk1", "assembler-mk2", "assembler-mk3"],
+      "time": 20,
+      "ingredients": {
+        "steel-plate": 15,
+        "circuit": 10
+      },
+      "results": {
+        "flamethrower-drone": 1
+      },
+      "requiresTech": "chemical-tech"
+    },
+    "laser-drone": {
+      "id": "laser-drone",
+      "name": "激光无人机",
+      "category": "military",
+      "buildingTypes": ["assembler-mk2", "assembler-mk3"],
+      "time": 25,
+      "ingredients": {
+        "steel-plate": 30,
+        "advanced-circuit": 15,
+        "battery": 10
+      },
+      "results": {
+        "laser-drone": 1
+      },
+      "requiresTech": "laser-weapons"
+    },
+    "plasma-drone": {
+      "id": "plasma-drone",
+      "name": "等离子无人机",
+      "category": "military",
+      "buildingTypes": ["assembler-mk2", "assembler-mk3"],
+      "time": 30,
+      "ingredients": {
+        "steel-plate": 40,
+        "advanced-circuit": 20,
+        "battery": 20
+      },
+      "results": {
+        "plasma-drone": 1
+      },
+      "requiresTech": "laser-weapons"
+    },
+    "artillery-drone": {
+      "id": "artillery-drone",
+      "name": "炮台无人机",
+      "category": "military",
+      "buildingTypes": ["assembler-mk2", "assembler-mk3"],
+      "time": 40,
+      "ingredients": {
+        "steel-plate": 50,
+        "advanced-circuit": 30,
+        "uranium-fuel-rod": 1
+      },
+      "results": {
+        "artillery-drone": 1
+      },
+      "requiresTech": "nuclear-power"
+    },
+    "uranium-processing": {
+      "id": "uranium-processing",
+      "name": "铀处理",
+      "category": "nuclear",
+      "buildingTypes": ["nuclear-processor"],
+      "time": 10,
+      "ingredients": {
+        "uranium-ore": 10
+      },
+      "results": {
+        "uranium-235": 1,
+        "uranium-238": 9
+      },
+      "requiresTech": "uranium-processing"
+    },
+    "uranium-fuel-rod": {
+      "id": "uranium-fuel-rod",
+      "name": "铀燃料棒",
+      "category": "nuclear",
+      "buildingTypes": ["nuclear-processor"],
+      "time": 20,
+      "ingredients": {
+        "uranium-235": 1,
+        "uranium-238": 19
+      },
+      "results": {
+        "uranium-fuel-rod": 10
+      },
+      "requiresTech": "uranium-fuel"
+    },
+    "science-basic": {
+      "id": "science-basic",
+      "name": "基础科研包",
+      "category": "science",
+      "buildingTypes": ["assembler-mk1", "assembler-mk2", "assembler-mk3"],
+      "time": 5,
+      "ingredients": {
+        "gear": 1,
+        "copper-plate": 1
+      },
+      "results": {
+        "science-basic": 1
+      },
+      "requiresTech": null
+    },
+    "science-automation": {
+      "id": "science-automation",
+      "name": "自动化科研包",
+      "category": "science",
+      "buildingTypes": ["assembler-mk1", "assembler-mk2", "assembler-mk3"],
+      "time": 6,
+      "ingredients": {
+        "gear": 2,
+        "circuit": 1
+      },
+      "results": {
+        "science-automation": 1
+      },
+      "requiresTech": "automation-1"
+    },
+    "science-chemical": {
+      "id": "science-chemical",
+      "name": "化工科研包",
+      "category": "science",
+      "buildingTypes": ["chemical-plant"],
+      "time": 12,
+      "ingredients": {
+        "sulfuric-acid": 1,
+        "battery": 2
+      },
+      "results": {
+        "science-chemical": 1
+      },
+      "requiresTech": "chemical-tech"
+    },
+    "science-nuclear": {
+      "id": "science-nuclear",
+      "name": "核能科研包",
+      "category": "science",
+      "buildingTypes": ["nuclear-processor"],
+      "time": 30,
+      "ingredients": {
+        "uranium-fuel-rod": 1,
+        "advanced-circuit": 5
+      },
+      "results": {
+        "science-nuclear": 1
+      },
+      "requiresTech": "nuclear-tech"
+    }
+  }
+}

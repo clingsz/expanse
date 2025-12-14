@@ -1,0 +1,249 @@
+{
+  "items": {
+    "iron-ore": {
+      "id": "iron-ore",
+      "name": "铁矿",
+      "category": "raw",
+      "stackSize": 100,
+      "storageWeight": 1
+    },
+    "copper-ore": {
+      "id": "copper-ore",
+      "name": "铜矿",
+      "category": "raw",
+      "stackSize": 100,
+      "storageWeight": 1
+    },
+    "coal": {
+      "id": "coal",
+      "name": "煤",
+      "category": "raw",
+      "stackSize": 100,
+      "storageWeight": 1
+    },
+    "stone": {
+      "id": "stone",
+      "name": "石材",
+      "category": "raw",
+      "stackSize": 100,
+      "storageWeight": 1
+    },
+    "crude-oil": {
+      "id": "crude-oil",
+      "name": "原油",
+      "category": "fluid",
+      "stackSize": 100,
+      "storageWeight": 1
+    },
+    "uranium-ore": {
+      "id": "uranium-ore",
+      "name": "铀矿",
+      "category": "raw",
+      "stackSize": 50,
+      "storageWeight": 2
+    },
+    "iron-plate": {
+      "id": "iron-plate",
+      "name": "铁板",
+      "category": "material",
+      "stackSize": 100,
+      "storageWeight": 1
+    },
+    "copper-plate": {
+      "id": "copper-plate",
+      "name": "铜板",
+      "category": "material",
+      "stackSize": 100,
+      "storageWeight": 1
+    },
+    "steel-plate": {
+      "id": "steel-plate",
+      "name": "钢板",
+      "category": "material",
+      "stackSize": 100,
+      "storageWeight": 1
+    },
+    "gear": {
+      "id": "gear",
+      "name": "齿轮",
+      "category": "component",
+      "stackSize": 100,
+      "storageWeight": 1
+    },
+    "circuit": {
+      "id": "circuit",
+      "name": "电路板",
+      "category": "component",
+      "stackSize": 100,
+      "storageWeight": 1
+    },
+    "advanced-circuit": {
+      "id": "advanced-circuit",
+      "name": "高级电路板",
+      "category": "component",
+      "stackSize": 100,
+      "storageWeight": 1
+    },
+    "plastic": {
+      "id": "plastic",
+      "name": "塑料",
+      "category": "material",
+      "stackSize": 100,
+      "storageWeight": 1
+    },
+    "battery": {
+      "id": "battery",
+      "name": "电池",
+      "category": "component",
+      "stackSize": 100,
+      "storageWeight": 1
+    },
+    "sulfuric-acid": {
+      "id": "sulfuric-acid",
+      "name": "硫酸",
+      "category": "fluid",
+      "stackSize": 100,
+      "storageWeight": 1
+    },
+    "heavy-oil": {
+      "id": "heavy-oil",
+      "name": "重油",
+      "category": "fluid",
+      "stackSize": 100,
+      "storageWeight": 1
+    },
+    "light-oil": {
+      "id": "light-oil",
+      "name": "轻油",
+      "category": "fluid",
+      "stackSize": 100,
+      "storageWeight": 1
+    },
+    "normal-bullet": {
+      "id": "normal-bullet",
+      "name": "普通子弹",
+      "category": "ammo",
+      "stackSize": 1000,
+      "storageWeight": 0.1
+    },
+    "piercing-bullet": {
+      "id": "piercing-bullet",
+      "name": "穿甲弹",
+      "category": "ammo",
+      "stackSize": 1000,
+      "storageWeight": 0.1
+    },
+    "explosive-bullet": {
+      "id": "explosive-bullet",
+      "name": "爆炸弹",
+      "category": "ammo",
+      "stackSize": 500,
+      "storageWeight": 0.2
+    },
+    "laser-charge": {
+      "id": "laser-charge",
+      "name": "激光充能包",
+      "category": "ammo",
+      "stackSize": 500,
+      "storageWeight": 0.2
+    },
+    "machinegun-drone": {
+      "id": "machinegun-drone",
+      "name": "机枪无人机",
+      "category": "unit",
+      "stackSize": 100,
+      "storageWeight": 10
+    },
+    "heavy-machinegun-drone": {
+      "id": "heavy-machinegun-drone",
+      "name": "重机枪无人机",
+      "category": "unit",
+      "stackSize": 100,
+      "storageWeight": 15
+    },
+    "flamethrower-drone": {
+      "id": "flamethrower-drone",
+      "name": "喷火无人机",
+      "category": "unit",
+      "stackSize": 100,
+      "storageWeight": 20
+    },
+    "laser-drone": {
+      "id": "laser-drone",
+      "name": "激光无人机",
+      "category": "unit",
+      "stackSize": 100,
+      "storageWeight": 20
+    },
+    "plasma-drone": {
+      "id": "plasma-drone",
+      "name": "等离子无人机",
+      "category": "unit",
+      "stackSize": 100,
+      "storageWeight": 25
+    },
+    "artillery-drone": {
+      "id": "artillery-drone",
+      "name": "炮台无人机",
+      "category": "unit",
+      "stackSize": 50,
+      "storageWeight": 50
+    },
+    "uranium-235": {
+      "id": "uranium-235",
+      "name": "铀235",
+      "category": "nuclear",
+      "stackSize": 50,
+      "storageWeight": 2
+    },
+    "uranium-238": {
+      "id": "uranium-238",
+      "name": "铀238",
+      "category": "nuclear",
+      "stackSize": 50,
+      "storageWeight": 2
+    },
+    "uranium-fuel-rod": {
+      "id": "uranium-fuel-rod",
+      "name": "铀燃料棒",
+      "category": "nuclear",
+      "stackSize": 50,
+      "storageWeight": 2
+    },
+    "science-basic": {
+      "id": "science-basic",
+      "name": "基础科研包",
+      "category": "science",
+      "stackSize": 100,
+      "storageWeight": 1
+    },
+    "science-automation": {
+      "id": "science-automation",
+      "name": "自动化科研包",
+      "category": "science",
+      "stackSize": 100,
+      "storageWeight": 1
+    },
+    "science-chemical": {
+      "id": "science-chemical",
+      "name": "化工科研包",
+      "category": "science",
+      "stackSize": 100,
+      "storageWeight": 1
+    },
+    "science-nuclear": {
+      "id": "science-nuclear",
+      "name": "核能科研包",
+      "category": "science",
+      "stackSize": 100,
+      "storageWeight": 1
+    },
+    "power": {
+      "id": "power",
+      "name": "电力",
+      "category": "energy",
+      "stackSize": 999999,
+      "storageWeight": 0
+    }
+  }
+}

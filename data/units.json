@@ -1,0 +1,142 @@
+{
+  "units": {
+    "machinegun-drone": {
+      "id": "machinegun-drone",
+      "name": "机枪无人机",
+      "buildingType": "barracks",
+      "buildTime": 10,
+      "cost": {
+        "iron-plate": 5,
+        "circuit": 2
+      },
+      "combat": {
+        "hp": 100,
+        "damage": 20,
+        "ammoPerTurn": {
+          "normal-bullet": 1
+        },
+        "powerPerTurn": 5
+      },
+      "storageWeight": 10,
+      "requiresTech": null,
+      "description": "通用型无人机，使用普通子弹"
+    },
+    "heavy-machinegun-drone": {
+      "id": "heavy-machinegun-drone",
+      "name": "重机枪无人机",
+      "buildingType": "barracks",
+      "buildTime": 15,
+      "cost": {
+        "steel-plate": 10,
+        "circuit": 5
+      },
+      "combat": {
+        "hp": 150,
+        "damage": 40,
+        "damageType": "piercing",
+        "ammoPerTurn": {
+          "piercing-bullet": 1
+        },
+        "powerPerTurn": 10
+      },
+      "storageWeight": 15,
+      "bonusVs": {
+        "armored": 2.0
+      },
+      "requiresTech": "piercing-ammo",
+      "description": "对装甲虫 200% 效率"
+    },
+    "flamethrower-drone": {
+      "id": "flamethrower-drone",
+      "name": "喷火无人机",
+      "buildingType": "barracks",
+      "buildTime": 20,
+      "cost": {
+        "steel-plate": 15,
+        "circuit": 10
+      },
+      "combat": {
+        "hp": 120,
+        "damage": 30,
+        "aoe": 3,
+        "ammoPerTurn": {
+          "light-oil": 2
+        },
+        "powerPerTurn": 15
+      },
+      "storageWeight": 20,
+      "bonusVs": {
+        "swarm": 1.5
+      },
+      "requiresTech": "chemical-tech",
+      "description": "范围攻击，对群体 150% 效率"
+    },
+    "laser-drone": {
+      "id": "laser-drone",
+      "name": "激光无人机",
+      "buildingType": "heavy-military-factory",
+      "buildTime": 25,
+      "cost": {
+        "steel-plate": 30,
+        "advanced-circuit": 15,
+        "battery": 10
+      },
+      "combat": {
+        "hp": 130,
+        "damage": 50,
+        "powerPerTurn": 50
+      },
+      "storageWeight": 20,
+      "bonusVs": {
+        "shielded": 2.0
+      },
+      "requiresTech": "laser-weapons",
+      "description": "对护盾虫 200% 效率，无需弹药"
+    },
+    "plasma-drone": {
+      "id": "plasma-drone",
+      "name": "等离子无人机",
+      "buildingType": "heavy-military-factory",
+      "buildTime": 30,
+      "cost": {
+        "steel-plate": 40,
+        "advanced-circuit": 20,
+        "battery": 20
+      },
+      "combat": {
+        "hp": 140,
+        "damage": 70,
+        "piercing": true,
+        "powerPerTurn": 80
+      },
+      "storageWeight": 25,
+      "requiresTech": "advanced-military",
+      "description": "穿透攻击"
+    },
+    "artillery-drone": {
+      "id": "artillery-drone",
+      "name": "炮台无人机",
+      "buildingType": "heavy-military-factory",
+      "buildTime": 40,
+      "cost": {
+        "steel-plate": 50,
+        "advanced-circuit": 30,
+        "uranium-fuel-rod": 1
+      },
+      "combat": {
+        "hp": 200,
+        "damage": 200,
+        "ammoPerTurn": {
+          "uranium-235": 0.1
+        },
+        "powerPerTurn": 100
+      },
+      "storageWeight": 50,
+      "bonusVs": {
+        "boss": 1.5
+      },
+      "requiresTech": "nuclear-power",
+      "description": "对 BOSS 150% 效率"
+    }
+  }
+}

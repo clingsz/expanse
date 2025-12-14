@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>矿机测试</title>
+    <style>
+        body {
+            font-family: 'Consolas', monospace;
+            background-color: #1a1a1a;
+            color: #cccccc;
+            padding: 20px;
+        }
+        #log {
+            background-color: #2a2a2a;
+            border: 1px solid #00a8ff;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #666;
+            padding-left: 10px;
+        }
+        .log-info { border-left-color: #00a8ff; }
+        .log-success { border-left-color: #4caf50; }
+        .log-error { border-left-color: #f44336; }
+        .log-warning { border-left-color: #ffc107; }
+        button {
+            background-color: #00a8ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0090dd;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔬 矿机生产测试</h1>
+    <button onclick="runTest()">运行测试</button>
+    <button onclick="clearLog()">清空日志</button>
+
+    <div id="log"></div>
+
+    <script>
+        let testLog = [];
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            testLog.push({ timestamp, message, type });
+
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `[${timestamp}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearLog() {
+            testLog = [];
+            document.getElementById('log').innerHTML = '';
+        }
+
+        async function runTest() {
+            clearLog();
+            log('========================================', 'info');
+            log('开始测试矿机资源生产功能', 'info');
+            log('========================================', 'info');
+
+            try {
+                // 加载游戏数据
+                log('步骤 1: 加载游戏数据...', 'info');
+                const [items, buildings, regions] = await Promise.all([
+                    fetch('data/items.json').then(r => r.json()),
+                    fetch('data/buildings.json').then(r => r.json()),
+                    fetch('data/regions.json').then(r => r.json())
+                ]);
+
+                log(`✓ 加载了 ${Object.keys(items.items).length} 个物品`, 'success');
+                log(`✓ 加载了 ${Object.keys(buildings.buildings).length} 个建筑`, 'success');
+                log(`✓ 加载了 ${regions.regions.length} 个区域`, 'success');
+
+                // 初始化测试环境
+                log('', 'info');
+                log('步骤 2: 初始化测试环境...', 'info');
+                const gameState = {
+                    resources: {},
+                    time: {
+                        isDay: true,
+                        totalTime: 0,
+                        timeRemaining: 180,
+                        dayDuration: 180,
+                        nightDuration: 120
+                    }
+                };
+
+                // 初始化资源
+                Object.entries(items.items).forEach(([id, item]) => {
+                    gameState.resources[id] = {
+                        current: 0,
+                        max: item.category === 'energy' ? 1000 : 500
+                    };
+                });
+
+                // 设置初始资源
+                gameState.resources['iron-plate'].current = 50;
+                gameState.resources['copper-plate'].current = 30;
+                gameState.resources['coal'].current = 20;
+                gameState.resources['power'].current = 100;
+
+                log(`✓ 初始铁板: ${gameState.resources['iron-plate'].current}`, 'success');
+                log(`✓ 初始铜板: ${gameState.resources['copper-plate'].current}`, 'success');
+                log(`✓ 初始电力: ${gameState.resources['power'].current}`, 'success');
+
+                // 创建测试区域
+                const region1Template = regions.regions[0];
+                const region = {
+                    id: region1Template.id,
+                    name: region1Template.name,
+                    slotsTotal: region1Template.slotsTotal,
+                    slotsUsed: 0,
+                    resourceNodes: region1Template.resourceNodes.map(node => ({...node})),
+                    buildings: []
+                };
+
+                log(`✓ 创建区域: ${region.name}`, 'success');
+                log(`  资源节点:`, 'info');
+                region.resourceNodes.forEach((node, idx) => {
+                    log(`    [${idx}] ${items.items[node.type].name}: ${node.amount} (速率: ${node.rate}/s)`, 'info');
+                });
+
+                // 建造矿机
+                log('', 'info');
+                log('步骤 3: 建造矿机 Mk1...', 'info');
+                const minerTemplate = buildings.buildings['miner-mk1'];
+                log(`  建筑信息: ${minerTemplate.name}`, 'info');
+                log(`  速度倍率: ${minerTemplate.speed}x`, 'info');
+                log(`  功耗: ${minerTemplate.powerConsumption} 电力/秒`, 'info');
+                log(`  允许资源: ${minerTemplate.allowedResources.join(', ')}`, 'info');
+
+                // 选择资源节点
+                let selectedNodeIndex = -1;
+                for (let i = 0; i < region.resourceNodes.length; i++) {
+                    const node = region.resourceNodes[i];
+                    if (minerTemplate.allowedResources.includes(node.type)) {
+                        selectedNodeIndex = i;
+                        log(`✓ 找到匹配的资源节点 [${i}]: ${items.items[node.type].name}`, 'success');
+                        break;
+                    }
+                }
+
+                if (selectedNodeIndex === -1) {
+                    log('✗ 没有找到匹配的资源节点！', 'error');
+                    log('  矿机允许的资源类型:', 'error');
+                    minerTemplate.allowedResources.forEach(res => {
+                        log(`    - ${res}`, 'error');
+                    });
+                    log('  区域的资源节点类型:', 'error');
+                    region.resourceNodes.forEach((node, idx) => {
+                        log(`    [${idx}] ${node.type}`, 'error');
+                    });
+                    return;
+                }
+
+                // 创建建筑
+                const building = {
+                    id: 1,
+                    buildingId: 'miner-mk1',
+                    active: true,
+                    regionId: region.id,
+                    resourceNodeIndex: selectedNodeIndex
+                };
+                region.buildings.push(building);
+
+                const targetNode = region.resourceNodes[selectedNodeIndex];
+                log(`✓ 矿机已建造，连接到资源节点 [${selectedNodeIndex}]`, 'success');
+                log(`  目标资源: ${items.items[targetNode.type].name}`, 'info');
+                log(`  节点剩余: ${targetNode.amount}`, 'info');
+
+                // 模拟生产
+                log('', 'info');
+                log('步骤 4: 模拟 10 秒生产...', 'info');
+
+                const initialIronPlate = gameState.resources['iron-plate'].current;
+                log(`  初始铁板数量: ${initialIronPlate}`, 'info');
+
+                // 模拟 100 次循环，每次 0.1 秒
+                for (let i = 0; i < 100; i++) {
+                    const deltaTime = 0.1;
+
+                    // 生产资源
+                    region.buildings.forEach(b => {
+                        if (!b.active) return;
+
+                        const template = buildings.buildings[b.buildingId];
+
+                        if (template.category === 'mining' && b.resourceNodeIndex !== undefined) {
+                            const hasPower = gameState.resources['power'].current > 0;
+                            if (!hasPower && template.powerConsumption) {
+                                if (i === 0) log('  ⚠ 电力不足，矿机停止工作', 'warning');
+                                return;
+                            }
+
+                            const node = region.resourceNodes[b.resourceNodeIndex];
+                            if (node.amount <= 0) {
+                                if (i === 0) log('  ⚠ 资源节点已耗尽', 'warning');
+                                return;
+                            }
+
+                            const produceAmount = node.rate * template.speed * deltaTime;
+                            const actualAmount = Math.min(produceAmount, node.amount);
+
+                            node.amount -= actualAmount;
+                            gameState.resources[node.type].current += actualAmount;
+                            gameState.resources[node.type].current = Math.min(
+                                gameState.resources[node.type].current,
+                                gameState.resources[node.type].max
+                            );
+
+                            // 每秒记录一次
+                            if (i % 10 === 0) {
+                                log(`  [${(i/10).toFixed(0)}s] 生产 ${actualAmount.toFixed(2)} ${items.items[node.type].name}，当前: ${gameState.resources[node.type].current.toFixed(2)}`, 'info');
+                            }
+                        }
+                    });
+                }
+
+                const finalIronPlate = gameState.resources['iron-plate'].current;
+                const produced = finalIronPlate - initialIronPlate;
+
+                log('', 'info');
+                log('========================================', 'info');
+                log('测试结果:', 'info');
+                log(`  初始铁板: ${initialIronPlate}`, 'info');
+                log(`  最终铁板: ${finalIronPlate.toFixed(2)}`, 'info');
+                log(`  生产数量: ${produced.toFixed(2)}`, produced > 0 ? 'success' : 'error');
+                log(`  预期生产: ${(5 * 1.0 * 10).toFixed(2)} (速率5 × 速度1.0 × 10秒)`, 'info');
+
+                if (produced > 0) {
+                    log('', 'success');
+                    log('✓✓✓ 测试通过！矿机正常生产资源！', 'success');
+                } else {
+                    log('', 'error');
+                    log('✗✗✗ 测试失败！矿机没有生产资源！', 'error');
+                }
+                log('========================================', 'info');
+
+            } catch (error) {
+                log('', 'error');
+                log(`✗ 测试出错: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>

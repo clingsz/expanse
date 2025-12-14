@@ -1,0 +1,178 @@
+{
+  "regions": [
+    {
+      "id": 1,
+      "name": "区域 1",
+      "phase": 1,
+      "slotsTotal": 16,
+      "resourceNodes": [
+        { "type": "iron-ore", "amount": 10000, "rate": 5 },
+        { "type": "copper-ore", "amount": 10000, "rate": 5 },
+        { "type": "stone", "amount": 5000, "rate": 5 }
+      ],
+      "enemies": [],
+      "conquered": true,
+      "description": "起始区域，无煤炭资源"
+    },
+    {
+      "id": 2,
+      "name": "区域 2",
+      "phase": 1,
+      "slotsTotal": 16,
+      "resourceNodes": [
+        { "type": "iron-ore", "amount": 1000, "rate": 5 },
+        { "type": "coal", "amount": 8000, "rate": 5 }
+      ],
+      "enemies": [
+        { "type": "small-worker-bug", "count": 10 }
+      ],
+      "conquered": false,
+      "description": "首个煤炭资源区域"
+    },
+    {
+      "id": 3,
+      "name": "区域 3",
+      "phase": 1,
+      "slotsTotal": 16,
+      "resourceNodes": [
+        { "type": "iron-ore", "amount": 1200, "rate": 5 },
+        { "type": "copper-ore", "amount": 800, "rate": 5 },
+        { "type": "stone", "amount": 1500, "rate": 5 }
+      ],
+      "enemies": [
+        { "type": "small-worker-bug", "count": 8 },
+        { "type": "medium-warrior-bug", "count": 5 }
+      ],
+      "conquered": false,
+      "description": "混合敌军，需要基础装备"
+    },
+    {
+      "id": 4,
+      "name": "区域 4 - BOSS",
+      "phase": 1,
+      "slotsTotal": 16,
+      "resourceNodes": [
+        { "type": "iron-ore", "amount": 2000, "rate": 5 },
+        { "type": "copper-ore", "amount": 2000, "rate": 5 },
+        { "type": "coal", "amount": 1500, "rate": 5 },
+        { "type": "crude-oil", "amount": 1000, "rate": 5 }
+      ],
+      "enemies": [
+        { "type": "boss-armored-colossus", "count": 1 }
+      ],
+      "isBoss": true,
+      "conquered": false,
+      "rewards": {
+        "unlockResources": ["crude-oil"],
+        "bonusSlots": 2
+      },
+      "description": "BOSS：装甲巨虫，解锁原油"
+    },
+    {
+      "id": 5,
+      "name": "区域 5",
+      "phase": 1,
+      "slotsTotal": 16,
+      "resourceNodes": [
+        { "type": "iron-ore", "amount": 1500, "rate": 5 },
+        { "type": "copper-ore", "amount": 1500, "rate": 5 },
+        { "type": "coal", "amount": 1200, "rate": 5 }
+      ],
+      "enemies": [
+        { "type": "medium-warrior-bug", "count": 10 },
+        { "type": "armored-beetle", "count": 3 }
+      ],
+      "conquered": false,
+      "description": "出现装甲单位，建议使用穿甲弹"
+    },
+    {
+      "id": 6,
+      "name": "区域 6",
+      "phase": 2,
+      "slotsTotal": 16,
+      "resourceNodes": [
+        { "type": "iron-ore", "amount": 1500, "rate": 5 },
+        { "type": "copper-ore", "amount": 1500, "rate": 5 },
+        { "type": "crude-oil", "amount": 1500, "rate": 5 }
+      ],
+      "enemies": [
+        { "type": "medium-warrior-bug", "count": 12 },
+        { "type": "fast-hunter-bug", "count": 5 }
+      ],
+      "conquered": false,
+      "description": "快速单位，建议范围武器"
+    },
+    {
+      "id": 7,
+      "name": "区域 7",
+      "phase": 2,
+      "slotsTotal": 16,
+      "resourceNodes": [
+        { "type": "copper-ore", "amount": 2000, "rate": 5 },
+        { "type": "crude-oil", "amount": 2000, "rate": 5 }
+      ],
+      "enemies": [
+        { "type": "energy-shield-bug", "count": 8 },
+        { "type": "armored-beetle", "count": 5 }
+      ],
+      "conquered": false,
+      "description": "护盾单位，激光武器效果显著"
+    },
+    {
+      "id": 8,
+      "name": "区域 8 - BOSS",
+      "phase": 2,
+      "slotsTotal": 16,
+      "resourceNodes": [
+        { "type": "iron-ore", "amount": 3000, "rate": 5 },
+        { "type": "copper-ore", "amount": 3000, "rate": 5 },
+        { "type": "crude-oil", "amount": 3000, "rate": 5 },
+        { "type": "uranium-ore", "amount": 500, "rate": 2 }
+      ],
+      "enemies": [
+        { "type": "boss-energy-core-bug", "count": 1 }
+      ],
+      "isBoss": true,
+      "conquered": false,
+      "rewards": {
+        "unlockResources": ["uranium-ore"],
+        "bonusSlots": 2
+      },
+      "description": "BOSS：能量核心虫，解锁铀矿"
+    },
+    {
+      "id": 9,
+      "name": "区域 9",
+      "phase": 2,
+      "slotsTotal": 16,
+      "resourceNodes": [
+        { "type": "iron-ore", "amount": 3000, "rate": 5 },
+        { "type": "crude-oil", "amount": 3000, "rate": 5 }
+      ],
+      "enemies": [
+        { "type": "spawner-bug", "count": 2 },
+        { "type": "armored-beetle", "count": 8 },
+        { "type": "energy-shield-bug", "count": 5 }
+      ],
+      "conquered": false,
+      "description": "孵化母虫，优先击杀"
+    },
+    {
+      "id": 10,
+      "name": "区域 10",
+      "phase": 2,
+      "slotsTotal": 16,
+      "resourceNodes": [
+        { "type": "iron-ore", "amount": 2500, "rate": 5 },
+        { "type": "copper-ore", "amount": 2500, "rate": 5 },
+        { "type": "coal", "amount": 2000, "rate": 5 }
+      ],
+      "enemies": [
+        { "type": "heavy-tank-bug", "count": 3 },
+        { "type": "medium-warrior-bug", "count": 10 }
+      ],
+      "conquered": false,
+      "description": "重型坦克虫，需要高级武器"
+    }
+  ]
+}
