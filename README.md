@@ -198,12 +198,14 @@ expansion/
 │   └── validate_data.js    # Data validation
 ├── backup/                 # Backup files
 ├── doc/                    # Documentation
-│   ├── DEVELOPER_MANUAL.md
+│   ├── overview.md         # Documentation catalog
+│   ├── GAME_DESIGN.md      # Game design document
+│   ├── UI_DESIGN.md        # UI/UX design
+│   ├── COMBAT_DESIGN.md    # Combat system
+│   ├── DEVELOPER_MANUAL.md # Technical guide
 │   ├── RECIPE_PRODUCTION_SYSTEM.md
 │   ├── THEME_COLORS.md
-│   ├── 扩张前线_游戏设计文档.md
-│   ├── 扩张前线_界面设计文档.md
-│   └── 扩张前线-战斗系统设计.md
+│   └── old/                # Archived docs
 └── log/                    # Session logs and state files
     └── state_*.md          # Agent state snapshots
 ```
@@ -280,14 +282,22 @@ node tests/test_mining.js
 
 ## 📚 Documentation
 
+**Start here:** [Documentation Overview](doc/overview.md)
+
 Detailed documentation is available in the `doc/` folder:
 
-- **[DEVELOPER_MANUAL.md](doc/DEVELOPER_MANUAL.md)**: Complete developer guide
+### Core Design
+- **[GAME_DESIGN.md](doc/GAME_DESIGN.md)**: Complete game design document
+- **[UI_DESIGN.md](doc/UI_DESIGN.md)**: UI/UX design specifications
+- **[COMBAT_DESIGN.md](doc/COMBAT_DESIGN.md)**: Combat system design (v2.0)
+
+### Technical Guides
+- **[DEVELOPER_MANUAL.md](doc/DEVELOPER_MANUAL.md)**: Developer guide and reference
 - **[RECIPE_PRODUCTION_SYSTEM.md](doc/RECIPE_PRODUCTION_SYSTEM.md)**: Production mechanics
-- **[THEME_COLORS.md](doc/THEME_COLORS.md)**: UI color scheme and design
-- **[扩张前线_游戏设计文档.md](doc/扩张前线_游戏设计文档.md)**: Game design document (Chinese)
-- **[扩张前线_界面设计文档.md](doc/扩张前线_界面设计文档.md)**: UI/UX design (Chinese)
-- **[扩张前线-战斗系统设计.md](doc/扩张前线-战斗系统设计.md)**: Combat system design (Chinese)
+- **[THEME_COLORS.md](doc/THEME_COLORS.md)**: UI color scheme and theme system
+
+### Project State
+- **[Latest State](log/state_20251213_164910.md)**: Current project status and session history
 
 ---
 

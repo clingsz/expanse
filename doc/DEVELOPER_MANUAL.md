@@ -1,9 +1,30 @@
 # 扩张前线 - 开发者手册
 ## Expansion Front - Developer Manual
 
-**版本:** 1.0
-**更新日期:** 2025-12-07
+**版本:** 1.1
+**更新日期:** 2025-12-13
 **目的:** 为Claude Code AI助手提供开发参考
+
+---
+
+## 📚 文档导航
+
+**新开发者？** 从这里开始：
+1. 阅读 [overview.md](overview.md) 了解整体文档结构
+2. 阅读 [GAME_DESIGN.md](GAME_DESIGN.md) 了解游戏设计
+3. 阅读本文档了解代码结构和开发规范
+
+**设计文档：**
+- [GAME_DESIGN.md](GAME_DESIGN.md) - 完整游戏设计文档
+- [UI_DESIGN.md](UI_DESIGN.md) - 界面设计规范
+- [COMBAT_DESIGN.md](COMBAT_DESIGN.md) - 战斗系统设计 (v2.0)
+
+**实现文档：**
+- [RECIPE_PRODUCTION_SYSTEM.md](RECIPE_PRODUCTION_SYSTEM.md) - 配方生产系统
+- [THEME_COLORS.md](THEME_COLORS.md) - 主题颜色系统
+
+**项目状态：**
+- [../log/state_20251213_164910.md](../log/state_20251213_164910.md) - 最新项目状态
 
 ---
 
