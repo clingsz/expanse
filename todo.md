@@ -1,4 +1,4 @@
-# <¯ Expansion Front - TODO List
+# <ï¿½ Expansion Front - TODO List
 
 **Last Updated:** 2025-12-13
 **Project Status:** Active Development - Alpha Phase
@@ -29,7 +29,7 @@
 
 ---
 
-## =á Medium Priority - Core Features
+## =ï¿½ Medium Priority - Core Features
 
 ### Game Systems
 
@@ -83,7 +83,7 @@
 
 ---
 
-## =â Low Priority - Enhancement & Polish
+## =ï¿½ Low Priority - Enhancement & Polish
 
 ### Content Expansion
 
@@ -153,7 +153,7 @@
 
 ---
 
-## =ñ Platform & Compatibility
+## =ï¿½ Platform & Compatibility
 
 ### Mobile Support
 - [ ] Test on mobile browsers
@@ -171,7 +171,7 @@
 
 ---
 
-## >ê Testing & Validation
+## >ï¿½ Testing & Validation
 
 ### Automated Testing
 - [ ] Expand test coverage in `tests/validate_data.js`
@@ -181,7 +181,7 @@
 - [ ] Set up continuous testing
 
 ### Manual Testing Checklist
-- [ ] Test full game progression (region 1 ’ 10)
+- [ ] Test full game progression (region 1 ï¿½ 10)
 - [ ] Test all building types
 - [ ] Test all recipe chains
 - [ ] Test all technologies
@@ -199,7 +199,7 @@
 
 ---
 
-## =Ú Documentation
+## =ï¿½ Documentation
 
 ### Code Documentation
 - [ ] Add JSDoc comments to main functions
@@ -221,7 +221,7 @@
 
 ---
 
-## =€ Future Features (Post-MVP)
+## =ï¿½ Future Features (Post-MVP)
 
 ### Endless Mode
 - [ ] Design endless mode progression
@@ -299,7 +299,7 @@
 
 ---
 
-## =Ë Notes for Developers
+## =ï¿½ Notes for Developers
 
 ### Development Priorities
 1. **Stability First**: Fix critical bugs before adding features
@@ -338,7 +338,7 @@ git push origin main
 
 ---
 
-## <¯ Sprint Goals
+## <ï¿½ Sprint Goals
 
 ### Current Sprint (Week of Dec 13-20)
 - [ ] Complete documentation consolidation  (Done!)
@@ -362,8 +362,8 @@ git push origin main
 
 **Legend:**
 - =4 High Priority - Work on these first
-- =á Medium Priority - Important but not urgent
-- =â Low Priority - Nice to have
+- =ï¿½ Medium Priority - Important but not urgent
+- =ï¿½ Low Priority - Nice to have
 - [x] Completed
 - [ ] Todo
 
@@ -372,3 +372,30 @@ git push origin main
 ---
 
 *Keep this file updated as tasks are completed and new priorities emerge!*
+
+The battle logic and scene needs drastic changes:
+1. the way to enter battle scene is to go to the battle region
+2. it will be shown in the region tab as the new region that's not yet conquered, when player switch to that tab from map or next region ... etc.
+3. if the region is not conquered, the battle scene will be shown
+4. the battle scene will remain there of the battle status. There's won't be a single battle, instead, the battle is there continously as a state.
+5. bugs will automatically heal up over time if they are not fighting (e.g if not in battle for 10s, then heal 1hp per second etc)
+6. let's remove the prepare battle scene and military scene. Instead, in the conquering region (battle scene of that region), there will be button of the drones.
+7. Player can click the drone button to send the drone into the battle. The drone will fight automatically once they are in battle.
+8. If drone is in battle, it cannot be recalled, unless the player won the battle.
+9. Let's also make some major update to the battle display system -- let's keep the 4 x 4 grids.
+These can show in the similar position as the building grids, but they are essentially different. they are for units
+the top 2 rows are for enemy units
+the bottom 2 rows are for player units
+Each type of units can occupy one grid or multiple -- as a troop
+The batle method will be automatic, but each grid of troop can have their own decision, unique cool down time, and unique target
+For each grid units, if their cool down time is over, they will choose a target to attack (according to the previous battle logic)
+there should be a bullet/attack effect from one grid to another grid to show the attack is happening.
+The damage/kill calculation will be same as heros of might and magic style, where the attack is calculated by total attack * number of units,
+the damage is applied to the target grid, the target grid will reduce number of troops/health acordingly.
+We still need to show the cooldown bar (similar to buildings) for each grid, some basic attack info
+and the top we need to show the same comparison bars to compare the situation of the two sides.
+and the ammunition status bar...etc.
+
+///
+
+I don't need you to fix the whole game and rebuild the whole game. I just need you to generate a quick demo prototype html/js demo that can be shown here, to give a feeling for myself. Not the whole game, no need for playable. Just battle scene to get feeling.
