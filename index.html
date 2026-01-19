@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>扩张 - Expanse</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -11,39 +11,62 @@
     <div id="game-container">
         <!-- Header Bar -->
         <header class="game-header">
-            <div class="header-title">扩张</div>
-            <div class="header-stats">
-                <div class="header-stat">
-                    <span class="stat-icon">⚡</span>
-                    <span class="stat-label">电力:</span>
-                    <span id="header-energy" class="stat-value">0/500</span>
-                </div>
-                <div class="header-stat">
-                    <span class="stat-icon">📦</span>
-                    <span class="stat-label">空间:</span>
-                    <span id="header-space" class="stat-value">0/10</span>
-                </div>
-                <div class="header-stat">
-                    <span class="stat-icon">⚠️</span>
-                    <span class="stat-label">威胁:</span>
-                    <span id="header-threat" class="stat-value">Lv.0 (安全)</span>
-                </div>
-            </div>
+            <div class="header-title">扩张 EXPANSE</div>
         </header>
 
-        <!-- Tab Navigation -->
-        <nav class="tab-nav">
-            <button class="tab-btn active" data-tab="buildings">建筑</button>
-            <button class="tab-btn" data-tab="resources">资源</button>
-            <button class="tab-btn" data-tab="battle">战斗</button>
-            <button class="tab-btn" data-tab="research">科研</button>
-        </nav>
+        <!-- Main 3-Column Layout -->
+        <div class="main-layout">
+            <!-- Left Sidebar: Status + Navigation -->
+            <aside class="left-sidebar">
+                <!-- Status Panel -->
+                <div class="status-panel">
+                    <div class="status-item">
+                        <div class="status-label">⚡ 电力</div>
+                        <div id="status-energy" class="status-value">0/500</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">📦 空间</div>
+                        <div id="status-space" class="status-value">0/10</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">⚠️ 威胁</div>
+                        <div id="status-threat" class="status-value">Lv.0</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">🪨 原料</div>
+                        <div id="status-raw-total" class="status-value">0</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">🔧 材料</div>
+                        <div id="status-material-total" class="status-value">0</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">🧪 科技包</div>
+                        <div id="status-science-total" class="status-value">0</div>
+                    </div>
+                </div>
 
-        <!-- Main Content Area -->
-        <main id="tab-content" class="tab-content">
-            <!-- Content rendered by game.js -->
-            <div class="loading">加载中...</div>
-        </main>
+                <!-- Tab Navigation -->
+                <nav class="tab-nav">
+                    <button class="tab-btn active" data-tab="buildings">🏭 建筑</button>
+                    <button class="tab-btn" data-tab="resources">📊 资源</button>
+                    <button class="tab-btn" data-tab="battle">⚔️ 战斗</button>
+                    <button class="tab-btn" data-tab="research">🔬 科研</button>
+                </nav>
+            </aside>
+
+            <!-- Center Content Area -->
+            <main id="tab-content" class="center-content">
+                <div class="loading">加载中...</div>
+            </main>
+
+            <!-- Right Sidebar: Info Panel -->
+            <aside class="right-sidebar">
+                <div id="info-panel" class="info-panel">
+                    <div class="info-placeholder">点击左侧项目查看详情</div>
+                </div>
+            </aside>
+        </div>
 
         <!-- Toast Container -->
         <div id="toast-container"></div>

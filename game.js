@@ -1,11 +1,11 @@
 // ============================================================
 // EXPANSE - Idle Number Game
-// Version 2.0 - Complete Rewrite
+// Version 3.0 - Widescreen Layout
 // ============================================================
 
 'use strict';
 
-// ===== GAME DATA (loaded from data.json, initialized here as fallback) =====
+// ===== GAME DATA (loaded from data.json) =====
 let GameData = {
     buildings: {},
     resources: {},
@@ -30,13 +30,11 @@ let gameState = {
     },
     threat: {
         level: 0,
-        timer: 60,        // seconds until next wave
+        timer: 60,
         timerMax: 60,
-        minThreshold: 2   // no attacks below this threat level
+        minThreshold: 2
     },
     research: {
-        current: null,
-        progress: 0,
         completed: []
     },
     stats: {
@@ -46,13 +44,15 @@ let gameState = {
 };
 
 // ===== CONSTANTS =====
-const TICK_RATE = 500;  // ms between game ticks (0.5 seconds)
+const TICK_RATE = 500;
 const TICK_SECONDS = TICK_RATE / 1000;
 
 // ===== UI STATE =====
 let currentTab = 'buildings';
-let selectedBuilding = null;  // Currently selected building in Buildings tab
-let selectedResearch = null;  // Currently selected research in Research tab
+let selectedBuilding = null;
+let selectedResearch = null;
+let selectedResource = null;
+let selectedUnit = null;  // { type: 'player' | 'enemy', index: number }
 let gameLoopInterval = null;
 let lastTickTime = Date.now();
 
@@ -63,18 +63,13 @@ let lastTickTime = Date.now();
 async function init() {
     console.log('Initializing Expanse...');
 
-    // Load game data
     await loadGameData();
-
-    // Initialize game state from data
     initializeGameState();
-
-    // Set up UI
     setupEventListeners();
     renderCurrentTab();
-    updateHeader();
+    updateInfoPanel();
+    updateStatusPanel();
 
-    // Start game loop
     gameLoopInterval = setInterval(gameLoop, TICK_RATE);
 
     console.log('Expanse initialized!');
@@ -88,78 +83,32 @@ async function loadGameData() {
         console.log('Game data loaded:', Object.keys(GameData));
     } catch (error) {
         console.error('Failed to load game data:', error);
-        // Use default data structure
         initializeDefaultData();
     }
 }
 
 function initializeDefaultData() {
-    // Fallback minimal data if data.json fails to load
     GameData = {
         resources: {
-            "iron-ore": { id: "iron-ore", name: "Iron Ore", category: "raw", baseStorage: 500 },
-            "copper-ore": { id: "copper-ore", name: "Copper Ore", category: "raw", baseStorage: 500 },
-            "coal": { id: "coal", name: "Coal", category: "raw", baseStorage: 500 },
-            "stone": { id: "stone", name: "Stone", category: "raw", baseStorage: 500 },
-            "iron-plate": { id: "iron-plate", name: "Iron Plate", category: "material", baseStorage: 200 },
-            "copper-plate": { id: "copper-plate", name: "Copper Plate", category: "material", baseStorage: 200 },
-            "energy": { id: "energy", name: "Energy", category: "energy", baseStorage: 500 },
-            "space": { id: "space", name: "Space", category: "meta", baseStorage: 10 }
+            "iron-ore": { id: "iron-ore", name: "铁矿", category: "raw", baseStorage: 500 },
+            "stone": { id: "stone", name: "石材", category: "raw", baseStorage: 500 },
+            "energy": { id: "energy", name: "电力", category: "energy", baseStorage: 500 },
+            "space": { id: "space", name: "空间", category: "meta", baseStorage: 10 }
         },
         buildings: {
             "miner-iron": {
-                id: "miner-iron", name: "Iron Miner", category: "mining",
+                id: "miner-iron", name: "铁矿机", category: "mining",
                 spaceCost: 1, buildCost: { "stone": 5 },
                 consumes: { "energy": 1 }, produces: { "iron-ore": 2 },
                 cycleTime: 0.5, requiresTech: null
-            },
-            "miner-copper": {
-                id: "miner-copper", name: "Copper Miner", category: "mining",
-                spaceCost: 1, buildCost: { "stone": 5 },
-                consumes: { "energy": 1 }, produces: { "copper-ore": 2 },
-                cycleTime: 0.5, requiresTech: null
-            },
-            "miner-coal": {
-                id: "miner-coal", name: "Coal Miner", category: "mining",
-                spaceCost: 1, buildCost: { "stone": 5 },
-                consumes: { "energy": 1 }, produces: { "coal": 2 },
-                cycleTime: 0.5, requiresTech: null
-            },
-            "furnace-iron-plate": {
-                id: "furnace-iron-plate", name: "Iron Smelter", category: "smelting",
-                spaceCost: 1, buildCost: { "stone": 10 },
-                consumes: { "iron-ore": 1, "energy": 2 }, produces: { "iron-plate": 1 },
-                cycleTime: 0.5, requiresTech: null
-            },
-            "furnace-copper-plate": {
-                id: "furnace-copper-plate", name: "Copper Smelter", category: "smelting",
-                spaceCost: 1, buildCost: { "stone": 10 },
-                consumes: { "copper-ore": 1, "energy": 2 }, produces: { "copper-plate": 1 },
-                cycleTime: 0.5, requiresTech: null
-            },
-            "generator-coal": {
-                id: "generator-coal", name: "Coal Generator", category: "power",
-                spaceCost: 1, buildCost: { "stone": 10, "iron-plate": 5 },
-                consumes: { "coal": 1 }, produces: { "energy": 20 },
-                cycleTime: 0.5, requiresTech: null
-            },
-            "expander": {
-                id: "expander", name: "Space Expander", category: "infrastructure",
-                spaceCost: 0, buildCost: { "iron-plate": 20, "copper-plate": 10 },
-                consumes: {}, produces: {},
-                cycleTime: 0, requiresTech: null,
-                special: "expander", expandAmount: 5, threatIncrease: 1
             }
         },
         technologies: {},
-        enemies: {
-            "basic-bug": { id: "basic-bug", name: "Basic Bug", hp: 50, attack: 10 }
-        }
+        enemies: {}
     };
 }
 
 function initializeGameState() {
-    // Initialize resources
     for (const [id, data] of Object.entries(GameData.resources)) {
         gameState.resources[id] = {
             current: 0,
@@ -167,28 +116,24 @@ function initializeGameState() {
         };
     }
 
-    // Special handling for space - starts with some available
     if (gameState.resources['space']) {
-        gameState.resources['space'].current = 0;  // 0 used
-        gameState.resources['space'].max = 10;     // 10 available
+        gameState.resources['space'].current = 0;
+        gameState.resources['space'].max = 10;
     }
 
-    // Give starting resources
     if (gameState.resources['stone']) gameState.resources['stone'].current = 50;
     if (gameState.resources['energy']) gameState.resources['energy'].current = 100;
 
-    // Initialize buildings (all start at 0)
     for (const id of Object.keys(GameData.buildings)) {
         gameState.buildings[id] = 0;
     }
 
-    // Initialize production stats
     for (const id of Object.keys(GameData.resources)) {
         gameState.stats.totalProduction[id] = 0;
         gameState.stats.totalConsumption[id] = 0;
     }
 
-    console.log('Game state initialized:', gameState);
+    console.log('Game state initialized');
 }
 
 // ============================================================
@@ -197,37 +142,36 @@ function initializeGameState() {
 
 function gameLoop() {
     const now = Date.now();
-    const dt = (now - lastTickTime) / 1000;  // delta time in seconds
+    const dt = (now - lastTickTime) / 1000;
     lastTickTime = now;
 
-    // Reset per-tick stats
     resetTickStats();
 
-    // 1. Base energy generation
+    // Base energy generation
     addResource('energy', gameState.base.energyGeneration * dt);
     gameState.stats.totalProduction['energy'] = (gameState.stats.totalProduction['energy'] || 0) + gameState.base.energyGeneration;
 
-    // 2. Process all buildings
     processBuildings(dt);
-
-    // 3. Update threat timer
     updateThreat(dt);
 
-    // 4. Process combat if in battle
     if (gameState.combat.inBattle) {
         processCombat(dt);
     }
 
-    // 5. Update research
-    updateResearch(dt);
+    // Only update status panel (left sidebar) - always safe
+    updateStatusPanel();
 
-    // 6. Update UI
-    updateHeader();
+    // Use incremental updates instead of full re-render
     if (currentTab === 'resources') {
-        renderResourcesTab();
+        updateResourceBoxes();  // Only update values, not structure
     } else if (currentTab === 'battle') {
-        renderBattleTab();
+        updateBattleDisplay();  // Only update battle-specific values
+    } else if (currentTab === 'buildings') {
+        updateBuildingBoxes();  // Only update counts
     }
+
+    // Update info panel values only (not structure)
+    updateInfoPanelValues();
 }
 
 function resetTickStats() {
@@ -299,113 +243,6 @@ function getSpaceAvailable() {
     return getSpaceMax() - getSpaceUsed();
 }
 
-// ============================================================
-// BUILDING SYSTEM
-// ============================================================
-
-function getBuildingCount(id) {
-    return gameState.buildings[id] || 0;
-}
-
-function canBuildBuilding(id) {
-    const building = GameData.buildings[id];
-    if (!building) return { can: false, reason: 'Unknown building' };
-
-    // Check tech requirement
-    if (building.requiresTech && !gameState.research.completed.includes(building.requiresTech)) {
-        return { can: false, reason: 'Technology not researched' };
-    }
-
-    // Check space
-    if (building.spaceCost > 0 && getSpaceAvailable() < building.spaceCost) {
-        return { can: false, reason: 'Not enough space' };
-    }
-
-    // Check cost
-    if (!canAfford(building.buildCost)) {
-        return { can: false, reason: 'Not enough resources' };
-    }
-
-    return { can: true, reason: '' };
-}
-
-function buildBuilding(id) {
-    const check = canBuildBuilding(id);
-    if (!check.can) {
-        showToast(check.reason, 'error');
-        return false;
-    }
-
-    const building = GameData.buildings[id];
-
-    // Spend resources
-    spendResources(building.buildCost);
-
-    // Add building
-    gameState.buildings[id] = (gameState.buildings[id] || 0) + 1;
-
-    // Handle special buildings
-    if (building.special === 'expander') {
-        gameState.resources['space'].max += building.expandAmount || 5;
-        gameState.threat.level += building.threatIncrease || 1;
-    }
-
-    showToast(`已建造 ${building.name}！`, 'success');
-    renderCurrentTab();
-    return true;
-}
-
-function processBuildings(dt) {
-    for (const [id, count] of Object.entries(gameState.buildings)) {
-        if (count <= 0) continue;
-
-        const building = GameData.buildings[id];
-        if (!building) continue;
-
-        // Skip buildings with no production
-        if (!building.produces || Object.keys(building.produces).length === 0) continue;
-
-        // Calculate production per tick
-        const cycleTime = building.cycleTime || 0.5;
-        const cyclesPerSecond = 1 / cycleTime;
-        const productionMultiplier = dt * cyclesPerSecond * count;
-
-        // Check if we can afford the consumption
-        let canProduce = true;
-        const consumeAmounts = {};
-
-        for (const [resourceId, amount] of Object.entries(building.consumes || {})) {
-            const needed = amount * productionMultiplier;
-            consumeAmounts[resourceId] = needed;
-            if (getResource(resourceId) < needed) {
-                canProduce = false;
-            }
-        }
-
-        // Check if output has space
-        for (const [resourceId, amount] of Object.entries(building.produces)) {
-            if (getResource(resourceId) >= getResourceMax(resourceId)) {
-                canProduce = false;
-            }
-        }
-
-        if (!canProduce) continue;
-
-        // Consume resources
-        for (const [resourceId, amount] of Object.entries(consumeAmounts)) {
-            removeResource(resourceId, amount);
-            gameState.stats.totalConsumption[resourceId] = (gameState.stats.totalConsumption[resourceId] || 0) + (amount / dt);
-        }
-
-        // Produce resources
-        for (const [resourceId, amount] of Object.entries(building.produces)) {
-            const produced = amount * productionMultiplier;
-            addResource(resourceId, produced);
-            gameState.stats.totalProduction[resourceId] = (gameState.stats.totalProduction[resourceId] || 0) + (produced / dt);
-        }
-    }
-}
-
 function getProductionRate(resourceId) {
     return gameState.stats.totalProduction[resourceId] || 0;
 }
@@ -419,37 +256,150 @@ function getNetRate(resourceId) {
 }
 
 // ============================================================
+// BUILDING SYSTEM
+// ============================================================
+
+function getBuildingCount(id) {
+    return gameState.buildings[id] || 0;
+}
+
+function canBuildBuilding(id) {
+    const building = GameData.buildings[id];
+    if (!building) return { can: false, reason: '未知建筑' };
+
+    if (building.requiresTech && !gameState.research.completed.includes(building.requiresTech)) {
+        return { can: false, reason: '需要科技' };
+    }
+
+    if (building.spaceCost > 0 && getSpaceAvailable() < building.spaceCost) {
+        return { can: false, reason: '空间不足' };
+    }
+
+    if (!canAfford(building.buildCost)) {
+        return { can: false, reason: '资源不足' };
+    }
+
+    return { can: true, reason: '' };
+}
+
+function buildBuilding(id) {
+    const check = canBuildBuilding(id);
+    if (!check.can) {
+        showToast(check.reason, 'error');
+        return false;
+    }
+
+    const building = GameData.buildings[id];
+    spendResources(building.buildCost);
+    gameState.buildings[id] = (gameState.buildings[id] || 0) + 1;
+
+    if (building.special === 'expander') {
+        gameState.resources['space'].max += building.expandAmount || 5;
+        gameState.threat.level += building.threatIncrease || 1;
+    }
+
+    showToast(`已建造 ${building.name}！`, 'success');
+    renderCurrentTab();
+    updateInfoPanel();
+    return true;
+}
+
+function removeBuilding(id) {
+    const count = getBuildingCount(id);
+    if (count <= 0) {
+        showToast('没有建筑可拆除', 'error');
+        return false;
+    }
+
+    const building = GameData.buildings[id];
+    if (!building) return false;
+
+    gameState.buildings[id] = count - 1;
+
+    if (building.special === 'expander') {
+        gameState.resources['space'].max -= building.expandAmount || 5;
+        gameState.threat.level = Math.max(0, gameState.threat.level - (building.threatIncrease || 1));
+    }
+
+    for (const [resourceId, amount] of Object.entries(building.buildCost || {})) {
+        addResource(resourceId, Math.floor(amount * 0.5));
+    }
+
+    showToast(`已拆除 ${building.name} (返还50%)`, 'info');
+    renderCurrentTab();
+    updateInfoPanel();
+    return true;
+}
+
+function processBuildings(dt) {
+    for (const [id, count] of Object.entries(gameState.buildings)) {
+        if (count <= 0) continue;
+
+        const building = GameData.buildings[id];
+        if (!building) continue;
+        if (!building.produces || Object.keys(building.produces).length === 0) continue;
+
+        const cycleTime = building.cycleTime || 0.5;
+        const cyclesPerSecond = 1 / cycleTime;
+        const productionMultiplier = dt * cyclesPerSecond * count;
+
+        let canProduce = true;
+        const consumeAmounts = {};
+
+        for (const [resourceId, amount] of Object.entries(building.consumes || {})) {
+            const needed = amount * productionMultiplier;
+            consumeAmounts[resourceId] = needed;
+            if (getResource(resourceId) < needed) {
+                canProduce = false;
+            }
+        }
+
+        for (const [resourceId, amount] of Object.entries(building.produces)) {
+            if (getResource(resourceId) >= getResourceMax(resourceId)) {
+                canProduce = false;
+            }
+        }
+
+        if (!canProduce) continue;
+
+        for (const [resourceId, amount] of Object.entries(consumeAmounts)) {
+            removeResource(resourceId, amount);
+            gameState.stats.totalConsumption[resourceId] = (gameState.stats.totalConsumption[resourceId] || 0) + (amount / dt);
+        }
+
+        for (const [resourceId, amount] of Object.entries(building.produces)) {
+            const produced = amount * productionMultiplier;
+            addResource(resourceId, produced);
+            gameState.stats.totalProduction[resourceId] = (gameState.stats.totalProduction[resourceId] || 0) + (produced / dt);
+        }
+    }
+}
+
+// ============================================================
 // THREAT & COMBAT SYSTEM
 // ============================================================
 
 function updateThreat(dt) {
-    // Only count down if threat is above threshold
     if (gameState.threat.level < gameState.threat.minThreshold) {
         return;
     }
 
-    // Count down timer
     gameState.threat.timer -= dt;
 
-    // Spawn wave when timer reaches 0
     if (gameState.threat.timer <= 0) {
         spawnEnemyWave();
-        // Reset timer (faster with higher threat)
         gameState.threat.timerMax = Math.max(30, 60 - gameState.threat.level * 5);
         gameState.threat.timer = gameState.threat.timerMax;
     }
 }
 
 function spawnEnemyWave() {
-    // Calculate wave strength based on threat level
     const waveStrength = gameState.threat.level * 10;
-
-    // For now, spawn basic bugs
     const bugCount = Math.floor(waveStrength / 5);
 
     gameState.combat.enemyUnits = [{
         type: 'basic-bug',
-        name: 'Basic Bug',
+        name: '小虫',
         count: bugCount,
         hp: 50 * bugCount,
         maxHp: 50 * bugCount,
@@ -457,7 +407,7 @@ function spawnEnemyWave() {
     }];
 
     gameState.combat.inBattle = true;
-    gameState.combat.log = [`Wave ${gameState.threat.level} incoming! ${bugCount} bugs attacking!`];
+    gameState.combat.log = [`第${gameState.threat.level}波来袭！${bugCount}只虫子进攻！`];
 
     showToast(`敌人来袭！`, 'warning');
 }
@@ -465,40 +415,31 @@ function spawnEnemyWave() {
 function processCombat(dt) {
     if (!gameState.combat.inBattle) return;
 
-    // Get player attack power (from drones/turrets)
     const playerAttack = getPlayerAttackPower();
-
-    // Get enemy attack power
     const enemyAttack = getEnemyAttackPower();
 
-    // Damage calculation (per second)
     const playerDamage = playerAttack * dt;
     const enemyDamage = enemyAttack * dt;
 
-    // Player attacks enemy front
     if (gameState.combat.enemyUnits.length > 0) {
         const target = gameState.combat.enemyUnits[0];
         target.hp -= playerDamage;
 
         if (target.hp <= 0) {
-            gameState.combat.log.push(`Defeated ${target.name}!`);
+            gameState.combat.log.push(`消灭了 ${target.name}！`);
             gameState.combat.enemyUnits.shift();
         }
     }
 
-    // Enemy attacks player front (units → defense → base)
     applyDamageToPlayer(enemyDamage);
 
-    // Check victory/defeat
     if (gameState.combat.enemyUnits.length === 0) {
-        // Victory!
         gameState.combat.inBattle = false;
-        gameState.combat.log.push('Victory! Wave defeated!');
+        gameState.combat.log.push('胜利！敌人已被击退！');
         showToast('战斗胜利！', 'success');
     }
 
     if (gameState.base.hp <= 0) {
-        // Game Over
         gameOver();
     }
 }
@@ -526,7 +467,6 @@ function getEnemyAttackPower() {
 function applyDamageToPlayer(damage) {
     let remainingDamage = damage;
 
-    // First, damage player units (front to back)
     for (const unit of gameState.combat.playerUnits) {
         if (remainingDamage <= 0) break;
         if (unit.hp <= 0) continue;
@@ -536,11 +476,10 @@ function applyDamageToPlayer(damage) {
         remainingDamage -= absorbed;
 
         if (unit.hp <= 0) {
-            gameState.combat.log.push(`Lost ${unit.name}!`);
+            gameState.combat.log.push(`失去了 ${unit.name}！`);
         }
     }
 
-    // Then damage base
     if (remainingDamage > 0) {
         gameState.base.hp -= remainingDamage;
     }
@@ -548,10 +487,9 @@ function applyDamageToPlayer(damage) {
 
 function gameOver() {
     clearInterval(gameLoopInterval);
-    gameState.combat.log.push('BASE DESTROYED! GAME OVER!');
+    gameState.combat.log.push('基地被摧毁！游戏结束！');
     showToast('游戏结束 - 基地被摧毁！', 'error');
 
-    // Show game over modal
     const modal = document.getElementById('game-over-modal');
     if (modal) modal.style.display = 'flex';
 }
@@ -564,8 +502,33 @@ function restartGame() {
 // RESEARCH SYSTEM
 // ============================================================
 
-function updateResearch(dt) {
-    // Research is now instant via unlockResearch - no progress tracking needed
+function unlockResearch(id) {
+    const tech = GameData.technologies[id];
+    if (!tech) return false;
+
+    if (gameState.research.completed.includes(id)) {
+        showToast('该科技已研究完成', 'info');
+        return false;
+    }
+
+    for (const prereq of (tech.prerequisites || [])) {
+        if (!gameState.research.completed.includes(prereq)) {
+            showToast('需要先完成前置研究', 'error');
+            return false;
+        }
+    }
+
+    if (!canAfford(tech.cost || {})) {
+        showToast('科研包不足', 'error');
+        return false;
+    }
+
+    spendResources(tech.cost || {});
+    gameState.research.completed.push(id);
+    showToast(`研究完成: ${tech.name}！`, 'success');
+    renderCurrentTab();
+    updateInfoPanel();
+    return true;
 }
 
 // ============================================================
@@ -573,7 +536,6 @@ function updateResearch(dt) {
 // ============================================================
 
 function setupEventListeners() {
-    // Tab buttons
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const tab = btn.dataset.tab;
@@ -585,12 +547,37 @@ function setupEventListeners() {
 function switchTab(tab) {
     currentTab = tab;
 
-    // Update tab button states
+    // Reset selection when switching tabs
+    if (tab === 'buildings') {
+        selectedResource = null;
+        selectedUnit = null;
+        if (!selectedBuilding && Object.keys(GameData.buildings).length > 0) {
+            selectedBuilding = Object.keys(GameData.buildings)[0];
+        }
+    } else if (tab === 'resources') {
+        selectedBuilding = null;
+        selectedUnit = null;
+        if (!selectedResource && Object.keys(GameData.resources).length > 0) {
+            selectedResource = Object.keys(GameData.resources)[0];
+        }
+    } else if (tab === 'battle') {
+        selectedBuilding = null;
+        selectedResource = null;
+    } else if (tab === 'research') {
+        selectedBuilding = null;
+        selectedResource = null;
+        selectedUnit = null;
+        if (!selectedResearch && Object.keys(GameData.technologies).length > 0) {
+            selectedResearch = Object.keys(GameData.technologies)[0];
+        }
+    }
+
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.tab === tab);
     });
 
     renderCurrentTab();
+    updateInfoPanel();
 }
 
 function renderCurrentTab() {
@@ -610,11 +597,10 @@ function renderCurrentTab() {
     }
 }
 
-function updateHeader() {
-    // Update key resources in header
-    const energyEl = document.getElementById('header-energy');
-    const spaceEl = document.getElementById('header-space');
-    const threatEl = document.getElementById('header-threat');
+function updateStatusPanel() {
+    const energyEl = document.getElementById('status-energy');
+    const spaceEl = document.getElementById('status-space');
+    const threatEl = document.getElementById('status-threat');
 
     if (energyEl) {
         const energy = Math.floor(getResource('energy'));
@@ -630,13 +616,55 @@ function updateHeader() {
         const threat = gameState.threat.level;
         const timer = Math.ceil(gameState.threat.timer);
         if (threat >= gameState.threat.minThreshold) {
-            threatEl.textContent = `Lv.${threat} (${timer}秒)`;
+            threatEl.textContent = `Lv.${threat} (${timer}s)`;
             threatEl.classList.add('warning');
         } else {
             threatEl.textContent = `Lv.${threat} (安全)`;
             threatEl.classList.remove('warning');
         }
     }
+
+    // Update resource summaries (totals)
+    updateResourceTotal('status-raw-total', 'raw');
+    updateResourceTotal('status-material-total', 'material');
+    updateResourceTotal('status-science-total', 'science');
+}
+
+function updateResourceTotal(elementId, category) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+
+    let total = 0;
+    for (const [id, res] of Object.entries(GameData.resources)) {
+        if (res.category === category) {
+            total += Math.floor(getResource(id));
+        }
+    }
+    el.textContent = total;
+}
+
+function updateInfoPanel() {
+    const panel = document.getElementById('info-panel');
+    if (!panel) return;
+
+    let html = '';
+
+    switch (currentTab) {
+        case 'buildings':
+            html = renderBuildingInfoPanel();
+            break;
+        case 'resources':
+            html = renderResourceInfoPanel();
+            break;
+        case 'battle':
+            html = renderBattleInfoPanel();
+            break;
+        case 'research':
+            html = renderResearchInfoPanel();
+            break;
+    }
+
+    panel.innerHTML = html || '<div class="info-placeholder">点击左侧项目查看详情</div>';
 }
 
 // ===== BUILDINGS TAB =====
@@ -644,12 +672,10 @@ function renderBuildingsTab() {
     const container = document.getElementById('tab-content');
     if (!container) return;
 
-    // Auto-select first building if none selected
     if (!selectedBuilding && Object.keys(GameData.buildings).length > 0) {
         selectedBuilding = Object.keys(GameData.buildings)[0];
     }
 
-    // Group buildings by category
     const categories = {};
     for (const [id, building] of Object.entries(GameData.buildings)) {
         const cat = building.category || 'other';
@@ -657,47 +683,53 @@ function renderBuildingsTab() {
         categories[cat].push({ id, ...building });
     }
 
-    // Build info panel HTML
-    const infoPanelHtml = renderBuildingInfoPanel();
-
-    // Build compact grid HTML
-    let gridHtml = '<div class="building-grid-compact">';
+    let html = '<div class="content-grid">';
     const categoryOrder = ['mining', 'smelting', 'crafting', 'power', 'military', 'defense', 'infrastructure'];
 
     for (const category of categoryOrder) {
         const buildings = categories[category];
         if (!buildings) continue;
 
-        gridHtml += `<div class="building-category-compact">
+        html += `<div class="content-category">
             <div class="category-label">${formatCategory(category)}</div>
-            <div class="building-boxes">`;
+            <div class="boxes-container">`;
 
         for (const building of buildings) {
             const count = getBuildingCount(building.id);
             const isSelected = selectedBuilding === building.id;
             const isLocked = building.requiresTech && !gameState.research.completed.includes(building.requiresTech);
 
-            gridHtml += `
-                <div class="building-box ${isSelected ? 'selected' : ''} ${isLocked ? 'locked' : ''}"
+            // Get main product info
+            let productInfo = '';
+            if (building.produces && Object.keys(building.produces).length > 0) {
+                const [productId] = Object.keys(building.produces);
+                const productRes = GameData.resources[productId];
+                const productAmount = Math.floor(getResource(productId));
+                productInfo = `${productRes?.name || productId} ${productAmount}`;
+            } else if (building.special === 'expander') {
+                productInfo = `+${building.expandAmount || 5} 空间`;
+            }
+
+            html += `
+                <div class="game-box building-box ${isSelected ? 'selected' : ''} ${isLocked ? 'locked' : ''}"
                      onclick="selectBuilding('${building.id}')">
-                    <span class="box-name">${building.name}</span>
-                    <span class="box-count">x${count}</span>
+                    <div class="box-line1">
+                        <span class="box-name">${building.name}</span>
+                        <span class="box-count">x${count}</span>
+                    </div>
+                    <div class="box-line2">${productInfo}</div>
                 </div>`;
         }
 
-        gridHtml += '</div></div>';
+        html += '</div></div>';
     }
-    gridHtml += '</div>';
+    html += '</div>';
 
-    container.innerHTML = infoPanelHtml + gridHtml;
+    container.innerHTML = html;
 }
 
 function renderBuildingInfoPanel() {
-    if (!selectedBuilding) {
-        return `<div class="building-info-panel">
-            <div class="info-placeholder">选择一个建筑</div>
-        </div>`;
-    }
+    if (!selectedBuilding) return '';
 
     const building = GameData.buildings[selectedBuilding];
     if (!building) return '';
@@ -721,11 +753,11 @@ function renderBuildingInfoPanel() {
         productionHtml += (productionHtml ? ' → ' : '') + prod;
     }
     if (building.special === 'expander') {
-        productionHtml = `<span class="special">+${building.expandAmount || 5} Space, +${building.threatIncrease || 1} Threat</span>`;
+        productionHtml = `<span class="special">+${building.expandAmount || 5} 空间, +${building.threatIncrease || 1} 威胁</span>`;
     }
-    if (!productionHtml) productionHtml = '<span class="no-prod">无生产</span>';
+    if (!productionHtml) productionHtml = '<span style="color: var(--text-dim)">无生产</span>';
 
-    // Cost info - simple format: 需要: xxx, 现有: xxx
+    // Cost info
     const costItems = Object.entries(building.buildCost || {});
     let costHtml = '';
     if (costItems.length === 0) {
@@ -739,118 +771,92 @@ function renderBuildingInfoPanel() {
         }).join('');
     }
 
-    // Lock message
     let lockMsg = '';
     if (isLocked) {
         const tech = GameData.technologies[building.requiresTech];
-        lockMsg = `<div class="info-locked">需要: ${tech?.name || building.requiresTech}</div>`;
+        lockMsg = `<div class="info-locked">需要科技: ${tech?.name || building.requiresTech}</div>`;
+    }
+
+    // Resource details section - consumed resources
+    let consumedHtml = '';
+    if (building.consumes && Object.keys(building.consumes).length > 0) {
+        consumedHtml = '<div class="info-section"><div class="info-section-title">消耗资源状态</div>';
+        for (const [id, amt] of Object.entries(building.consumes)) {
+            const res = GameData.resources[id];
+            if (!res) continue;
+            const current = Math.floor(getResource(id));
+            const max = getResourceMax(id);
+            const percent = max > 0 ? (current / max) * 100 : 0;
+            const perSecond = (amt / (building.cycleTime || 1)) * count;
+            consumedHtml += `
+                <div class="resource-detail">
+                    <div class="resource-detail-header">
+                        <span class="resource-detail-name">${res.name}</span>
+                        <span class="resource-detail-rate cons">-${perSecond.toFixed(1)}/s</span>
+                    </div>
+                    <div class="resource-detail-bar">
+                        <div class="bar-fill" style="width: ${percent}%"></div>
+                    </div>
+                    <div class="resource-detail-values">${current} / ${max}</div>
+                </div>`;
+        }
+        consumedHtml += '</div>';
+    }
+
+    // Resource details section - produced resources
+    let producedHtml = '';
+    if (building.produces && Object.keys(building.produces).length > 0) {
+        producedHtml = '<div class="info-section"><div class="info-section-title">产出资源状态</div>';
+        for (const [id, amt] of Object.entries(building.produces)) {
+            const res = GameData.resources[id];
+            if (!res) continue;
+            const current = Math.floor(getResource(id));
+            const max = getResourceMax(id);
+            const percent = max > 0 ? (current / max) * 100 : 0;
+            const perSecond = (amt / (building.cycleTime || 1)) * count;
+            producedHtml += `
+                <div class="resource-detail">
+                    <div class="resource-detail-header">
+                        <span class="resource-detail-name">${res.name}</span>
+                        <span class="resource-detail-rate prod">+${perSecond.toFixed(1)}/s</span>
+                    </div>
+                    <div class="resource-detail-bar">
+                        <div class="bar-fill" style="width: ${percent}%"></div>
+                    </div>
+                    <div class="resource-detail-values">${current} / ${max}</div>
+                </div>`;
+        }
+        producedHtml += '</div>';
     }
 
     return `
-        <div class="building-info-panel">
-            <div class="info-header">
-                <span class="info-name">${building.name}</span>
-                <span class="info-count">已有: ${count}</span>
-            </div>
+        <div class="info-header">
+            <span class="info-name">${building.name}</span>
+            <span class="info-count">x${count}</span>
+        </div>
+        <div class="info-section">
+            <div class="info-section-title">生产</div>
             <div class="info-production">${productionHtml}</div>
-            ${building.spaceCost > 0 ? `<div class="info-space">占用空间: ${building.spaceCost}</div>` : ''}
+        </div>
+        ${building.spaceCost > 0 ? `<div style="color: var(--text-dim); font-size: 0.8rem; margin-bottom: 8px;">占用空间: ${building.spaceCost}</div>` : ''}
+        <div class="info-section">
+            <div class="info-section-title">建造成本</div>
             <div class="info-cost">${costHtml}</div>
-            ${lockMsg}
-            <div class="info-actions">
-                <button class="btn btn-build" onclick="buildBuilding('${selectedBuilding}')"
-                        ${check.can ? '' : 'disabled'}>建造 +1</button>
-                <button class="btn btn-remove" onclick="removeBuilding('${selectedBuilding}')"
-                        ${count > 0 ? '' : 'disabled'}>拆除 -1</button>
-            </div>
-        </div>`;
+        </div>
+        ${lockMsg}
+        <div class="info-actions">
+            <button class="btn btn-build" onclick="buildBuilding('${selectedBuilding}')" ${check.can ? '' : 'disabled'}>建造 +1</button>
+            <button class="btn btn-remove" onclick="removeBuilding('${selectedBuilding}')" ${count > 0 ? '' : 'disabled'}>拆除 -1</button>
+        </div>
+        <div class="info-divider"></div>
+        ${consumedHtml}
+        ${producedHtml}`;
 }
 
 function selectBuilding(id) {
     selectedBuilding = id;
     renderBuildingsTab();
-}
-
-function removeBuilding(id) {
-    const count = getBuildingCount(id);
-    if (count <= 0) {
-        showToast('没有建筑可拆除', 'error');
-        return false;
-    }
-
-    const building = GameData.buildings[id];
-    if (!building) return false;
-
-    // Remove building
-    gameState.buildings[id] = count - 1;
-
-    // Handle expander removal (reduce space and threat)
-    if (building.special === 'expander') {
-        gameState.resources['space'].max -= building.expandAmount || 5;
-        gameState.threat.level = Math.max(0, gameState.threat.level - (building.threatIncrease || 1));
-    }
-
-    // Refund 50% of build cost
-    for (const [resourceId, amount] of Object.entries(building.buildCost || {})) {
-        addResource(resourceId, Math.floor(amount * 0.5));
-    }
-
-    showToast(`已拆除 ${building.name} (返还50%)`, 'info');
-    renderBuildingsTab();
-    return true;
-}
-
-function formatCategory(cat) {
-    const names = {
-        'mining': '采矿',
-        'smelting': '冶炼',
-        'crafting': '制造',
-        'power': '电力',
-        'infrastructure': '基建',
-        'military': '军事',
-        'defense': '防御',
-        'raw': '原料',
-        'material': '材料',
-        'energy': '能源',
-        'science': '科技',
-        'meta': '其他'
-    };
-    return names[cat] || cat;
-}
-
-function formatCost(cost) {
-    if (!cost || Object.keys(cost).length === 0) return '免费';
-    return Object.entries(cost)
-        .map(([id, amount]) => {
-            const has = getResource(id);
-            const color = has >= amount ? 'var(--color-positive)' : 'var(--color-negative)';
-            const name = GameData.resources[id]?.name || id;
-            return `<span style="color:${color}">${name}: ${Math.floor(has)}/${amount}</span>`;
-        })
-        .join(', ');
-}
-
-function formatProduction(building) {
-    const parts = [];
-
-    if (building.consumes && Object.keys(building.consumes).length > 0) {
-        const cons = Object.entries(building.consumes)
-            .map(([id, amt]) => `-${amt} ${GameData.resources[id]?.name || id}`)
-            .join(', ');
-        parts.push(`<span class="consumption">${cons}</span>`);
-    }
-
-    if (building.produces && Object.keys(building.produces).length > 0) {
-        const prod = Object.entries(building.produces)
-            .map(([id, amt]) => `+${amt} ${GameData.resources[id]?.name || id}`)
-            .join(', ');
-        parts.push(`<span class="production">${prod}</span>`);
-    }
-
-    if (building.special === 'expander') {
-        parts.push(`<span class="special">+${building.expandAmount || 5} Space, +${building.threatIncrease || 1} Threat</span>`);
-    }
-
-    return parts.join(' → ') || 'No production';
+    updateInfoPanel();
 }
 
 // ===== RESOURCES TAB =====
@@ -858,9 +864,10 @@ function renderResourcesTab() {
     const container = document.getElementById('tab-content');
     if (!container) return;
 
-    let html = '<div class="resources-list">';
+    if (!selectedResource && Object.keys(GameData.resources).length > 0) {
+        selectedResource = Object.keys(GameData.resources)[0];
+    }
 
-    // Group by category
     const categories = {};
     for (const [id, data] of Object.entries(GameData.resources)) {
         const cat = data.category || 'other';
@@ -868,58 +875,106 @@ function renderResourcesTab() {
         categories[cat].push({ id, ...data });
     }
 
-    // Define category order
-    const categoryOrder = ['raw', 'material', 'energy', 'science', 'military', 'meta'];
+    let html = '<div class="content-grid">';
+    const categoryOrder = ['raw', 'material', 'energy', 'science', 'meta'];
 
     for (const category of categoryOrder) {
         const resources = categories[category];
         if (!resources) continue;
 
-        html += `<div class="resource-category">
-            <h3 class="category-title">${formatCategory(category)}</h3>`;
+        html += `<div class="content-category">
+            <div class="category-label">${formatCategory(category)}</div>
+            <div class="boxes-container">`;
 
         for (const res of resources) {
             const current = Math.floor(getResource(res.id));
-            const max = getResourceMax(res.id);
-            const production = getProductionRate(res.id);
-            const consumption = getConsumptionRate(res.id);
-            const net = production - consumption;
+            const isSelected = selectedResource === res.id;
+            const net = getNetRate(res.id);
+            let rateClass = 'neutral';
+            if (net > 0.1) rateClass = 'positive';
+            else if (net < -0.1) rateClass = 'negative';
 
-            // Color coding for net rate
-            let netClass = 'neutral';
-            if (net > 0.1) netClass = 'positive';
-            else if (net < -0.1) netClass = 'negative';
-
-            // Special display for space
-            if (res.id === 'space') {
-                const used = getSpaceUsed();
-                html += `
-                    <div class="resource-row">
-                        <span class="resource-name">${res.name}</span>
-                        <span class="resource-amount">${used} / ${max} used</span>
-                        <span class="resource-rate"></span>
-                    </div>`;
-            } else {
-                const percent = max > 0 ? (current / max) * 100 : 0;
-                html += `
-                    <div class="resource-row">
-                        <span class="resource-name">${res.name}</span>
-                        <div class="resource-bar-container">
-                            <div class="resource-bar" style="width: ${percent}%"></div>
-                            <span class="resource-bar-text">${current} / ${max}</span>
-                        </div>
-                        <span class="resource-rate ${netClass}">
-                            (+${production.toFixed(1)} -${consumption.toFixed(1)} = ${net >= 0 ? '+' : ''}${net.toFixed(1)}/s)
-                        </span>
-                    </div>`;
-            }
+            html += `
+                <div class="game-box resource-box ${isSelected ? 'selected' : ''}"
+                     onclick="selectResource('${res.id}')">
+                    <div class="box-name">${res.name}</div>
+                    <div class="box-amount">${current}</div>
+                    <div class="box-rate ${rateClass}">${net >= 0 ? '+' : ''}${net.toFixed(1)}/s</div>
+                </div>`;
         }
 
-        html += '</div>';
+        html += '</div></div>';
+    }
+    html += '</div>';
+
+    container.innerHTML = html;
+}
+
+function renderResourceInfoPanel() {
+    if (!selectedResource) return '';
+
+    const res = GameData.resources[selectedResource];
+    if (!res) return '';
+
+    const current = Math.floor(getResource(selectedResource));
+    const max = getResourceMax(selectedResource);
+    const production = getProductionRate(selectedResource);
+    const consumption = getConsumptionRate(selectedResource);
+    const net = production - consumption;
+    const percent = max > 0 ? (current / max) * 100 : 0;
+
+    // Special for space
+    if (selectedResource === 'space') {
+        const used = getSpaceUsed();
+        return `
+            <div class="info-header">
+                <span class="info-name">${res.name}</span>
+            </div>
+            <div class="info-section">
+                <div class="info-section-title">使用情况</div>
+                <div style="font-size: 1.2rem; color: var(--primary-color); margin: 8px 0;">${used} / ${max}</div>
+                <div style="color: var(--text-dim); font-size: 0.85rem;">剩余: ${max - used} 空间</div>
+            </div>
+            <div style="color: var(--text-dim); font-size: 0.8rem; margin-top: 12px;">
+                建造扩张器可增加空间
+            </div>`;
     }
 
-    html += '</div>';
-    container.innerHTML = html;
+    return `
+        <div class="info-header">
+            <span class="info-name">${res.name}</span>
+            <span class="info-status">${formatCategory(res.category)}</span>
+        </div>
+        <div class="info-section">
+            <div class="info-section-title">存储</div>
+            <div style="font-size: 1.2rem; color: var(--primary-color); margin: 8px 0;">${current} / ${max}</div>
+            <div class="resource-bar-mini">
+                <div class="bar-fill" style="width: ${percent}%"></div>
+            </div>
+        </div>
+        <div class="info-section">
+            <div class="info-section-title">生产速率</div>
+            <div class="resource-rates">
+                <div class="rate-line">
+                    <span class="rate-label">生产:</span>
+                    <span class="rate-value positive">+${production.toFixed(1)}/s</span>
+                </div>
+                <div class="rate-line">
+                    <span class="rate-label">消耗:</span>
+                    <span class="rate-value negative">-${consumption.toFixed(1)}/s</span>
+                </div>
+                <div class="rate-line" style="border-top: 1px solid var(--border-color); padding-top: 4px; margin-top: 4px;">
+                    <span class="rate-label">净增:</span>
+                    <span class="rate-value ${net >= 0 ? 'positive' : 'negative'}">${net >= 0 ? '+' : ''}${net.toFixed(1)}/s</span>
+                </div>
+            </div>
+        </div>`;
+}
+
+function selectResource(id) {
+    selectedResource = id;
+    renderResourcesTab();
+    updateInfoPanel();
 }
 
 // ===== BATTLE TAB =====
@@ -927,79 +982,116 @@ function renderBattleTab() {
     const container = document.getElementById('tab-content');
     if (!container) return;
 
+    let html = '<div class="battle-layout">';
+
+    // Player units section
+    html += `<div class="battle-section">
+        <div class="battle-section-title friendly">我方单位</div>
+        <div class="boxes-container">`;
+
+    if (gameState.combat.playerUnits.length === 0) {
+        html += '<div style="color: var(--text-muted); font-size: 0.85rem; padding: 8px;">暂无战斗单位</div>';
+    } else {
+        gameState.combat.playerUnits.forEach((unit, i) => {
+            const isSelected = selectedUnit?.type === 'player' && selectedUnit?.index === i;
+            html += `
+                <div class="game-box unit-box friendly ${isSelected ? 'selected' : ''}"
+                     onclick="selectUnit('player', ${i})">
+                    <div class="box-name">${unit.name}</div>
+                    <div class="box-value">x${unit.count}</div>
+                </div>`;
+        });
+    }
+
+    html += '</div></div>';
+
+    // Enemy units section
+    html += `<div class="battle-section">
+        <div class="battle-section-title enemy">敌方单位</div>
+        <div class="boxes-container">`;
+
+    if (!gameState.combat.inBattle || gameState.combat.enemyUnits.length === 0) {
+        html += '<div style="color: var(--text-muted); font-size: 0.85rem; padding: 8px;">暂无敌人</div>';
+    } else {
+        gameState.combat.enemyUnits.forEach((unit, i) => {
+            const isSelected = selectedUnit?.type === 'enemy' && selectedUnit?.index === i;
+            html += `
+                <div class="game-box unit-box enemy ${isSelected ? 'selected' : ''}"
+                     onclick="selectUnit('enemy', ${i})">
+                    <div class="box-name">${unit.name}</div>
+                    <div class="box-value">x${unit.count}</div>
+                </div>`;
+        });
+    }
+
+    html += '</div></div></div>';
+
+    // Combat log
+    html += `<div class="combat-log">
+        <div class="combat-log-title">战斗日志</div>
+        <div class="log-entries">
+            ${gameState.combat.log.slice(-5).map(entry => `<div class="log-entry">${entry}</div>`).join('')}
+        </div>
+    </div>`;
+
+    container.innerHTML = html;
+}
+
+function renderBattleInfoPanel() {
+    // Show base health and threat info
     const threat = gameState.threat.level;
     const timer = Math.ceil(gameState.threat.timer);
     const baseHp = Math.floor(gameState.base.hp);
     const baseMaxHp = gameState.base.maxHp;
     const basePercent = (baseHp / baseMaxHp) * 100;
 
-    let html = `
-        <div class="battle-panel">
-            <div class="threat-display">
-                <h3>威胁等级: ${threat}</h3>
-                ${threat >= gameState.threat.minThreshold
-                    ? `<div class="threat-timer">下波攻击: ${timer}秒</div>`
-                    : `<div class="threat-safe">安全 (低于阈值 ${gameState.threat.minThreshold})</div>`
-                }
-            </div>
-
-            <div class="base-health">
-                <h3>基地生命</h3>
-                <div class="health-bar-container">
-                    <div class="health-bar" style="width: ${basePercent}%"></div>
-                    <span class="health-text">${baseHp} / ${baseMaxHp}</span>
-                </div>
-            </div>
-
-            <div class="forces-display">
-                <div class="player-forces">
-                    <h4>我方单位</h4>
-                    ${renderPlayerUnits()}
-                </div>
-
-                <div class="enemy-forces">
-                    <h4>敌方单位</h4>
-                    ${renderEnemyUnits()}
-                </div>
-            </div>
-
-            <div class="combat-log">
-                <h4>战斗日志</h4>
-                <div class="log-entries">
-                    ${gameState.combat.log.slice(-5).map(entry => `<div class="log-entry">${entry}</div>`).join('')}
-                </div>
-            </div>
-        </div>`;
-
-    container.innerHTML = html;
-}
-
-function renderPlayerUnits() {
-    if (gameState.combat.playerUnits.length === 0) {
-        return '<div class="no-units">暂无战斗单位（建造无人机厂）</div>';
+    let unitInfo = '';
+    if (selectedUnit) {
+        const units = selectedUnit.type === 'player' ? gameState.combat.playerUnits : gameState.combat.enemyUnits;
+        const unit = units[selectedUnit.index];
+        if (unit) {
+            const hpPercent = (unit.hp / unit.maxHp) * 100;
+            unitInfo = `
+                <div class="info-section">
+                    <div class="info-section-title">选中单位</div>
+                    <div style="font-size: 1rem; color: var(--primary-color); margin-bottom: 8px;">${unit.name}</div>
+                    <div style="font-size: 0.85rem; margin-bottom: 4px;">数量: ${unit.count}</div>
+                    <div style="font-size: 0.85rem; margin-bottom: 4px;">攻击力: ${unit.attack}</div>
+                    <div style="font-size: 0.85rem; margin-bottom: 4px;">生命值: ${Math.floor(unit.hp)}/${unit.maxHp}</div>
+                    <div class="health-bar-container">
+                        <div class="health-bar" style="width: ${hpPercent}%"></div>
+                    </div>
+                </div>`;
+        }
     }
 
-    return gameState.combat.playerUnits.map((unit, i) => `
-        <div class="unit-row">
-            <span class="unit-order">${i + 1}.</span>
-            <span class="unit-name">${unit.name} x${unit.count}</span>
-            <span class="unit-hp">HP: ${Math.floor(unit.hp)}/${unit.maxHp}</span>
+    return `
+        <div class="info-header">
+            <span class="info-name">战斗状态</span>
+            <span class="info-status">${gameState.combat.inBattle ? '战斗中' : '安全'}</span>
         </div>
-    `).join('');
+        <div class="info-section">
+            <div class="info-section-title">基地生命</div>
+            <div style="font-size: 1.1rem; color: var(--danger-color); margin: 4px 0;">${baseHp} / ${baseMaxHp}</div>
+            <div class="health-bar-container">
+                <div class="health-bar" style="width: ${basePercent}%"></div>
+            </div>
+        </div>
+        <div class="info-section">
+            <div class="info-section-title">威胁等级</div>
+            <div style="font-size: 1rem; color: var(--warning-color); margin: 4px 0;">Lv.${threat}</div>
+            ${threat >= gameState.threat.minThreshold
+                ? `<div style="color: var(--text-dim); font-size: 0.85rem;">下波攻击: ${timer}秒</div>`
+                : `<div style="color: var(--success-color); font-size: 0.85rem;">安全 (低于阈值${gameState.threat.minThreshold})</div>`
+            }
+        </div>
+        ${unitInfo}`;
 }
 
-function renderEnemyUnits() {
-    if (!gameState.combat.inBattle || gameState.combat.enemyUnits.length === 0) {
-        return '<div class="no-units">暂无敌人（等待下一波）</div>';
-    }
-
-    return gameState.combat.enemyUnits.map((unit, i) => `
-        <div class="unit-row enemy">
-            <span class="unit-order">${i + 1}.</span>
-            <span class="unit-name">${unit.name}</span>
-            <span class="unit-hp">HP: ${Math.floor(unit.hp)}/${unit.maxHp}</span>
-        </div>
-    `).join('');
+function selectUnit(type, index) {
+    selectedUnit = { type, index };
+    renderBattleTab();
+    updateInfoPanel();
 }
 
 // ===== RESEARCH TAB =====
@@ -1007,18 +1099,10 @@ function renderResearchTab() {
     const container = document.getElementById('tab-content');
     if (!container) return;
 
-    // Auto-select first research if none selected
     if (!selectedResearch && Object.keys(GameData.technologies).length > 0) {
         selectedResearch = Object.keys(GameData.technologies)[0];
     }
 
-    // Build info panel HTML
-    const infoPanelHtml = renderResearchInfoPanel();
-
-    // Build compact grid HTML grouped by tier
-    let gridHtml = '<div class="research-grid-compact">';
-
-    // Group technologies by tier
     const tiers = { 1: [], 2: [], 3: [] };
     for (const [id, tech] of Object.entries(GameData.technologies)) {
         const tier = tech.tier || 1;
@@ -1029,13 +1113,15 @@ function renderResearchTab() {
     const tierNames = { 1: '红包科技 (1级)', 2: '绿包科技 (2级)', 3: '蓝包科技 (3级)' };
     const tierColors = { 1: 'tier-red', 2: 'tier-green', 3: 'tier-blue' };
 
+    let html = '<div class="content-grid">';
+
     for (const tier of [1, 2, 3]) {
         const techs = tiers[tier];
         if (!techs || techs.length === 0) continue;
 
-        gridHtml += `<div class="research-category-compact">
+        html += `<div class="content-category">
             <div class="category-label ${tierColors[tier]}">${tierNames[tier]}</div>
-            <div class="research-boxes">`;
+            <div class="boxes-container">`;
 
         for (const tech of techs) {
             const isCompleted = gameState.research.completed.includes(tech.id);
@@ -1043,27 +1129,27 @@ function renderResearchTab() {
             const prereqsMet = (tech.prerequisites || []).every(p => gameState.research.completed.includes(p));
             const isLocked = !prereqsMet && !isCompleted;
 
-            gridHtml += `
-                <div class="research-box ${tierColors[tier]} ${isSelected ? 'selected' : ''} ${isCompleted ? 'completed' : ''} ${isLocked ? 'locked' : ''}"
+            let statusIcon = '';
+            if (isCompleted) statusIcon = '✓';
+            else if (isLocked) statusIcon = '🔒';
+
+            html += `
+                <div class="game-box research-box ${tierColors[tier]} ${isSelected ? 'selected' : ''} ${isCompleted ? 'completed' : ''} ${isLocked ? 'locked' : ''}"
                      onclick="selectResearch('${tech.id}')">
-                    <span class="box-name">${tech.name}</span>
-                    <span class="box-status">${isCompleted ? '✓' : (isLocked ? '🔒' : '')}</span>
+                    <div class="box-name">${tech.name}</div>
+                    <div class="box-icon">${statusIcon}</div>
                 </div>`;
         }
 
-        gridHtml += '</div></div>';
+        html += '</div></div>';
     }
-    gridHtml += '</div>';
+    html += '</div>';
 
-    container.innerHTML = infoPanelHtml + gridHtml;
+    container.innerHTML = html;
 }
 
 function renderResearchInfoPanel() {
-    if (!selectedResearch) {
-        return `<div class="research-info-panel">
-            <div class="info-placeholder">选择一个科技</div>
-        </div>`;
-    }
+    if (!selectedResearch) return '';
 
     const tech = GameData.technologies[selectedResearch];
     if (!tech) return '';
@@ -1110,73 +1196,294 @@ function renderResearchInfoPanel() {
         unlocksHtml += '</div>';
     }
 
-    // Tier display
     const tierNames = { 1: '红包1级', 2: '绿包2级', 3: '蓝包3级' };
-    const tierHtml = `<div class="info-tier">等级: ${tierNames[tech.tier] || '未知'}</div>`;
 
     return `
-        <div class="research-info-panel">
-            <div class="info-header">
-                <span class="info-name">${tech.name}</span>
-                <span class="info-status">${isCompleted ? '已完成' : (prereqsMet ? '可研究' : '未解锁')}</span>
-            </div>
-            <div class="info-description">${tech.description || ''}</div>
-            ${tierHtml}
-            ${prereqHtml}
-            ${unlocksHtml}
-            <div class="info-cost-section">
-                <div class="cost-label">科研包消耗:</div>
-                ${costHtml}
-            </div>
-            <div class="info-actions">
-                <button class="btn btn-research" onclick="unlockResearch('${selectedResearch}')"
-                        ${canUnlock ? '' : 'disabled'}>
-                    ${isCompleted ? '已完成' : '研究'}
-                </button>
-            </div>
+        <div class="info-header">
+            <span class="info-name">${tech.name}</span>
+            <span class="info-status">${isCompleted ? '已完成' : (prereqsMet ? '可研究' : '未解锁')}</span>
+        </div>
+        <div class="info-description">${tech.description || ''}</div>
+        <div class="info-tier">等级: ${tierNames[tech.tier] || '未知'}</div>
+        ${prereqHtml}
+        ${unlocksHtml}
+        <div class="info-section">
+            <div class="info-section-title">科研包消耗</div>
+            <div class="info-cost">${costHtml}</div>
+        </div>
+        <div class="info-actions">
+            <button class="btn btn-research" onclick="unlockResearch('${selectedResearch}')" ${canUnlock ? '' : 'disabled'}>
+                ${isCompleted ? '已完成' : '研究'}
+            </button>
         </div>`;
 }
 
 function selectResearch(id) {
     selectedResearch = id;
     renderResearchTab();
+    updateInfoPanel();
 }
 
-function unlockResearch(id) {
-    const tech = GameData.technologies[id];
-    if (!tech) return false;
+// ===== UTILITY FUNCTIONS =====
 
-    // Check if already completed
-    if (gameState.research.completed.includes(id)) {
-        showToast('该科技已研究完成', 'info');
-        return false;
+function formatCategory(cat) {
+    const names = {
+        'mining': '采矿',
+        'smelting': '冶炼',
+        'crafting': '制造',
+        'power': '电力',
+        'infrastructure': '基建',
+        'military': '军事',
+        'defense': '防御',
+        'raw': '原料',
+        'material': '材料',
+        'energy': '能源',
+        'science': '科技',
+        'meta': '其他'
+    };
+    return names[cat] || cat;
+}
+
+// ===== INCREMENTAL UPDATE FUNCTIONS =====
+// These update only values, not DOM structure, to prevent button click issues
+
+function updateBuildingBoxes() {
+    // Update building counts and product amounts without rebuilding DOM
+    for (const [id, building] of Object.entries(GameData.buildings)) {
+        const box = document.querySelector(`.building-box[onclick="selectBuilding('${id}')"]`);
+        if (box) {
+            // Update count
+            const countEl = box.querySelector('.box-count');
+            if (countEl) {
+                countEl.textContent = `x${getBuildingCount(id)}`;
+            }
+
+            // Update product amount
+            const line2El = box.querySelector('.box-line2');
+            if (line2El && building.produces && Object.keys(building.produces).length > 0) {
+                const [productId] = Object.keys(building.produces);
+                const productRes = GameData.resources[productId];
+                const productAmount = Math.floor(getResource(productId));
+                line2El.textContent = `${productRes?.name || productId} ${productAmount}`;
+            }
+        }
+    }
+}
+
+function updateResourceBoxes() {
+    // Update resource values without rebuilding DOM
+    for (const id of Object.keys(GameData.resources)) {
+        const box = document.querySelector(`.resource-box[onclick="selectResource('${id}')"]`);
+        if (box) {
+            const amountEl = box.querySelector('.box-amount');
+            const rateEl = box.querySelector('.box-rate');
+
+            if (amountEl) {
+                amountEl.textContent = Math.floor(getResource(id));
+            }
+            if (rateEl) {
+                const net = getNetRate(id);
+                rateEl.textContent = `${net >= 0 ? '+' : ''}${net.toFixed(1)}/s`;
+                rateEl.className = 'box-rate ' + (net > 0.1 ? 'positive' : (net < -0.1 ? 'negative' : 'neutral'));
+            }
+        }
+    }
+}
+
+function updateBattleDisplay() {
+    // Update combat log
+    const logContainer = document.querySelector('.log-entries');
+    if (logContainer) {
+        logContainer.innerHTML = gameState.combat.log.slice(-5)
+            .map(entry => `<div class="log-entry">${entry}</div>`).join('');
     }
 
-    // Check prerequisites
-    for (const prereq of (tech.prerequisites || [])) {
-        if (!gameState.research.completed.includes(prereq)) {
-            showToast('需要先完成前置研究', 'error');
-            return false;
+    // Update enemy unit HP if in battle
+    if (gameState.combat.inBattle) {
+        gameState.combat.enemyUnits.forEach((unit, i) => {
+            const box = document.querySelector(`.unit-box.enemy[onclick="selectUnit('enemy', ${i})"]`);
+            if (box) {
+                const valueEl = box.querySelector('.box-value');
+                if (valueEl) {
+                    valueEl.textContent = `x${unit.count}`;
+                }
+            }
+        });
+    }
+}
+
+function updateInfoPanelValues() {
+    // Only update dynamic values in the info panel, not the structure
+    const panel = document.getElementById('info-panel');
+    if (!panel) return;
+
+    // Update cost lines (check if resources changed)
+    const costLines = panel.querySelectorAll('.cost-line');
+    costLines.forEach(line => {
+        // Parse the cost line text and update "现有" value
+        const text = line.textContent;
+        const match = text.match(/^(.+) - 需要: (\d+), 现有: \d+$/);
+        if (match) {
+            const resourceName = match[1];
+            const needed = parseInt(match[2]);
+            // Find resource ID by name
+            for (const [id, res] of Object.entries(GameData.resources)) {
+                if (res.name === resourceName) {
+                    const has = Math.floor(getResource(id));
+                    const ok = has >= needed;
+                    line.textContent = `${resourceName} - 需要: ${needed}, 现有: ${has}`;
+                    line.className = `cost-line ${ok ? 'cost-ok' : 'cost-need'}`;
+                    break;
+                }
+            }
+        }
+    });
+
+    // Update building tab button states
+    if (currentTab === 'buildings' && selectedBuilding) {
+        const check = canBuildBuilding(selectedBuilding);
+        const count = getBuildingCount(selectedBuilding);
+        const building = GameData.buildings[selectedBuilding];
+
+        const buildBtn = panel.querySelector('.btn-build');
+        const removeBtn = panel.querySelector('.btn-remove');
+
+        if (buildBtn) {
+            buildBtn.disabled = !check.can;
+        }
+        if (removeBtn) {
+            removeBtn.disabled = count <= 0;
+        }
+
+        // Update count display
+        const countEl = panel.querySelector('.info-count');
+        if (countEl) {
+            countEl.textContent = `x${count}`;
+        }
+
+        // Update resource detail bars and values
+        const resourceDetails = panel.querySelectorAll('.resource-detail');
+        resourceDetails.forEach(detail => {
+            const nameEl = detail.querySelector('.resource-detail-name');
+            const valuesEl = detail.querySelector('.resource-detail-values');
+            const barFill = detail.querySelector('.bar-fill');
+            const rateEl = detail.querySelector('.resource-detail-rate');
+
+            if (nameEl && valuesEl) {
+                const resName = nameEl.textContent;
+                // Find resource by name
+                for (const [id, res] of Object.entries(GameData.resources)) {
+                    if (res.name === resName) {
+                        const current = Math.floor(getResource(id));
+                        const max = getResourceMax(id);
+                        const percent = max > 0 ? (current / max) * 100 : 0;
+
+                        valuesEl.textContent = `${current} / ${max}`;
+                        if (barFill) barFill.style.width = `${percent}%`;
+
+                        // Update rate based on current building count
+                        if (rateEl && building) {
+                            const isConsumed = building.consumes && building.consumes[id];
+                            const isProduced = building.produces && building.produces[id];
+                            const amt = isConsumed ? building.consumes[id] : (isProduced ? building.produces[id] : 0);
+                            const perSecond = (amt / (building.cycleTime || 1)) * count;
+                            if (isConsumed) {
+                                rateEl.textContent = `-${perSecond.toFixed(1)}/s`;
+                            } else if (isProduced) {
+                                rateEl.textContent = `+${perSecond.toFixed(1)}/s`;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        });
+    }
+
+    // Update research tab button states
+    if (currentTab === 'research' && selectedResearch) {
+        const tech = GameData.technologies[selectedResearch];
+        if (tech) {
+            const isCompleted = gameState.research.completed.includes(selectedResearch);
+            const prereqsMet = (tech.prerequisites || []).every(p => gameState.research.completed.includes(p));
+            const canAffordTech = canAfford(tech.cost || {});
+            const canUnlock = !isCompleted && prereqsMet && canAffordTech;
+
+            const researchBtn = panel.querySelector('.btn-research');
+            if (researchBtn) {
+                researchBtn.disabled = !canUnlock;
+            }
         }
     }
 
-    // Check cost
-    if (!canAfford(tech.cost || {})) {
-        showToast('科研包不足', 'error');
-        return false;
+    // Update resource info panel specific values
+    if (currentTab === 'resources' && selectedResource) {
+        const current = Math.floor(getResource(selectedResource));
+        const max = getResourceMax(selectedResource);
+        const production = getProductionRate(selectedResource);
+        const consumption = getConsumptionRate(selectedResource);
+        const net = production - consumption;
+        const percent = max > 0 ? (current / max) * 100 : 0;
+
+        // Update storage value
+        const storageValue = panel.querySelector('.info-section div[style*="font-size: 1.2rem"]');
+        if (storageValue && selectedResource !== 'space') {
+            storageValue.textContent = `${current} / ${max}`;
+        }
+
+        // Update bar fill
+        const barFill = panel.querySelector('.bar-fill');
+        if (barFill) {
+            barFill.style.width = `${percent}%`;
+        }
+
+        // Update rate values
+        const rateValues = panel.querySelectorAll('.rate-value');
+        if (rateValues.length >= 3) {
+            rateValues[0].textContent = `+${production.toFixed(1)}/s`;
+            rateValues[1].textContent = `-${consumption.toFixed(1)}/s`;
+            rateValues[2].textContent = `${net >= 0 ? '+' : ''}${net.toFixed(1)}/s`;
+            rateValues[2].className = `rate-value ${net >= 0 ? 'positive' : 'negative'}`;
+        }
+
+        // Special for space
+        if (selectedResource === 'space') {
+            const used = getSpaceUsed();
+            const spaceValue = panel.querySelector('.info-section div[style*="font-size: 1.2rem"]');
+            if (spaceValue) {
+                spaceValue.textContent = `${used} / ${max}`;
+            }
+        }
     }
 
-    // Spend resources
-    spendResources(tech.cost || {});
+    // Update battle info panel
+    if (currentTab === 'battle') {
+        const baseHp = Math.floor(gameState.base.hp);
+        const baseMaxHp = gameState.base.maxHp;
+        const basePercent = (baseHp / baseMaxHp) * 100;
+        const threat = gameState.threat.level;
+        const timer = Math.ceil(gameState.threat.timer);
 
-    // Complete research
-    gameState.research.completed.push(id);
-    showToast(`研究完成: ${tech.name}！`, 'success');
-    renderResearchTab();
-    return true;
+        // Update base HP
+        const hpValue = panel.querySelector('.info-section div[style*="color: var(--danger-color)"]');
+        if (hpValue) {
+            hpValue.textContent = `${baseHp} / ${baseMaxHp}`;
+        }
+
+        // Update health bar
+        const healthBar = panel.querySelector('.health-bar');
+        if (healthBar) {
+            healthBar.style.width = `${basePercent}%`;
+        }
+
+        // Update threat timer
+        const timerDiv = panel.querySelector('.info-section div[style*="font-size: 0.85rem"]');
+        if (timerDiv && threat >= gameState.threat.minThreshold) {
+            timerDiv.textContent = `下波攻击: ${timer}秒`;
+        }
+    }
 }
 
-// ===== TOAST NOTIFICATIONS =====
 function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
     if (!container) {
@@ -1194,15 +1501,6 @@ function showToast(message, type = 'info') {
         toast.classList.remove('show');
         setTimeout(() => toast.remove(), 300);
     }, 3000);
-}
-
-// ===== NUMBER FORMATTING =====
-function formatNumber(num) {
-    if (num >= 1e12) return (num / 1e12).toFixed(1) + 'T';
-    if (num >= 1e9) return (num / 1e9).toFixed(1) + 'B';
-    if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M';
-    if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K';
-    return Math.floor(num).toString();
 }
 
 // ============================================================
