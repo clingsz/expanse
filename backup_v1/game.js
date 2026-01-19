@@ -257,25 +257,10 @@ const gameState = {
     // 建筑ID计数器
     buildingIdCounter: 1,
 
-    // 战斗系统
-    battle: {
-        active: false,
-        targetRegion: null,
-        playerUnits: {}, // {unitId: {count, units: [{hp, maxHp, attackTimer}]}}
-        enemyUnits: [], // [{enemyId, hp, maxHp, attackTimer}]
-        selectedUnits: {}, // 战前选择的单位数量 {unitId: count}
-        battleLog: [],
-        retreating: false,
-        retreatProgress: 0,
-        battleTime: 0
-    },
+    // Grid-based battle system - removed old battle state
+    // Battle is now per-region, stored in region.battle
 
-    // 单位库存
-    unitInventory: {
-        'machinegun-drone': 20,
-        'heavy-machinegun-drone': 10,
-        'flamethrower-drone': 5
-    }
+    // Unit inventory removed - units are now resources
 };
 
 // ========================================
@@ -595,8 +580,8 @@ function initializeGame() {
     gameState.resources['coal'].current = 100;
 
     // 初始军事资源 (DEBUG - 方便测试战斗系统)
-    gameState.resources['machinegun-drone'].current = 10;
-    gameState.resources['normal-bullet'].current = 1000;
+    gameState.resources['machinegun-drone'].current = 500;
+    gameState.resources['normal-bullet'].current = 50000;
 
     // 初始化区域
     const region1Template = GameData.regionTemplates[0];
@@ -605,19 +590,155 @@ function initializeGame() {
         name: region1Template.name,
         slotsTotal: region1Template.slotsTotal,
         slotsUsed: 0,
-        resourceNodes: region1Template.resourceNodes.map(node => ({...node})),
-        buildings: [],
+        buildingSlots: initializeBuildingSlots(region1Template), // New slot-based system
+        buildings: [], // Keep for backward compatibility
         conquered: true
     }];
 
+    // Set current region to the first region
+    gameState.currentRegionId = region1Template.id;
+
     console.log('✓ 游戏初始化完成！');
+    console.log(`   当前区域: ${region1Template.name} (ID: ${region1Template.id})`);
     console.log('========================================');
     return true;
 }
 
 // ========================================
+// Battle Grid System
+// ========================================
+function initializeBattleGrid(region, regionTemplate) {
+    // Create 4x4 grid (16 cells)
+    // Cells 0-7: Enemy troops (top 2 rows)
+    // Cells 8-15: Player troops (bottom 2 rows)
+
+    const grid = [];
+    for (let i = 0; i < 16; i++) {
+        grid.push({
+            troop: null, // {type, count, hpPerUnit, totalHP, maxHP}
+            cooldown: 0,
+            maxCooldown: 0,
+            status: 'idle'
+        });
+    }
+
+    // Initialize enemy troops in top 2 rows (cells 0-7)
+    // Split large groups into multiple cells (max 10 units per cell)
+    if (regionTemplate.enemies) {
+        let cellIndex = 0;
+        regionTemplate.enemies.forEach(enemySpawn => {
+            const enemyData = GameData.enemies[enemySpawn.type];
+            if (!enemyData || enemySpawn.count <= 0) return;
+
+            // Split into groups of 10
+            let remainingCount = enemySpawn.count;
+            while (remainingCount > 0 && cellIndex < 8) {
+                const groupSize = Math.min(10, remainingCount);
+
+                const totalHP = enemyData.hp * groupSize;
+                grid[cellIndex].troop = {
+                    type: enemySpawn.type,
+                    side: 'enemy',
+                    count: groupSize,
+                    hpPerUnit: enemyData.hp,
+                    totalHP: totalHP,
+                    displayHP: totalHP, // Initialize displayHP for visual sync
+                    incomingDamage: 0, // Track in-flight bullets
+                    attack: enemyData.attack * 0.5 // Half attack power for slower battles
+                };
+                grid[cellIndex].maxCooldown = 4.0; // 4 second attack interval (doubled)
+                grid[cellIndex].cooldown = Math.random() * 4.0; // Random initial cooldown
+
+                remainingCount -= groupSize;
+                cellIndex++;
+            }
+        });
+    }
+
+    region.battle = {
+        grid: grid,
+        active: true,
+        lastCombatTime: Date.now(),
+        battleLog: []
+    };
+}
+
+function ensureBattleState(region) {
+    const regionTemplate = GameData.regionTemplates.find(r => r.id === region.id);
+    if (!region.battle && regionTemplate && !region.conquered) {
+        initializeBattleGrid(region, regionTemplate);
+    }
+    return region.battle;
+}
+
+// ========================================
 // 界面切换系统
 // ========================================
+// Initialize building slots with properties (resource nodes, etc.)
+function initializeBuildingSlots(template) {
+    const slots = [];
+    const resourceNodes = template.resourceNodes || [];
+
+    // Create all slots (16 for region)
+    for (let i = 0; i < template.slotsTotal; i++) {
+        slots.push({
+            slotIndex: i,
+            slotProperty: null, // No property by default
+            building: null
+        });
+    }
+
+    // Randomly assign resource nodes to slots
+    if (resourceNodes.length > 0) {
+        // Get random slot indices (no duplicates)
+        const availableIndices = Array.from({length: template.slotsTotal}, (_, i) => i);
+        const shuffled = availableIndices.sort(() => Math.random() - 0.5);
+
+        resourceNodes.forEach((node, index) => {
+            if (index < shuffled.length) {
+                const slotIndex = shuffled[index];
+                slots[slotIndex].slotProperty = {
+                    type: 'resource',
+                    resourceType: node.type,
+                    totalAmount: node.amount,
+                    remainingAmount: node.amount,
+                    miningRate: node.rate
+                };
+            }
+        });
+    }
+
+    return slots;
+}
+
+function findNextUnconqueredRegion() {
+    // Find first unconquered region
+    for (let i = 0; i < GameData.regionTemplates.length; i++) {
+        const template = GameData.regionTemplates[i];
+        const region = gameState.regions.find(r => r.id === template.id);
+
+        if (!region || !region.conquered) {
+            // Return existing region or create new one
+            if (!region) {
+                const newRegion = {
+                    id: template.id,
+                    name: template.name,
+                    slotsTotal: template.slotsTotal,
+                    slotsUsed: 0,
+                    buildingSlots: initializeBuildingSlots(template), // New slot-based system
+                    buildings: [], // Keep for backward compatibility, will migrate
+                    conquered: false
+                };
+                gameState.regions.push(newRegion);
+                initializeBattleGrid(newRegion, template);
+                return newRegion;
+            }
+            return region;
+        }
+    }
+    return null; // All conquered
+}
+
 function showScreen(screenName) {
     document.querySelectorAll('.screen').forEach(screen => {
         screen.style.display = 'none';
@@ -662,7 +783,15 @@ function showScreen(screenName) {
     } else if (screenName === 'map') {
         updateMapScreen();
     } else if (screenName === 'military') {
-        updateMilitaryScreen();
+        // Show next unconquered region's battle
+        const nextBattleRegion = findNextUnconqueredRegion();
+        if (nextBattleRegion) {
+            gameState.currentRegionId = nextBattleRegion.id;
+            ensureBattleState(nextBattleRegion);
+            updateMilitaryBattleScreen();
+        } else {
+            updateMilitaryScreen(); // Fallback to idle view if all conquered
+        }
     }
 }
 
@@ -751,14 +880,28 @@ function updateRegionScreen() {
     const slotsTotalEl = document.getElementById('slots-total');
     if (slotsTotalEl) slotsTotalEl.textContent = region.slotsTotal;
 
-    // 计算总资源量
-    const totalResources = region.resourceNodes.reduce((sum, node) => sum + node.amount, 0);
+    // 计算总资源量（兼容新旧系统）
+    let totalResources = 0;
+    if (region.resourceNodes && region.resourceNodes.length > 0) {
+        // Old system
+        totalResources = region.resourceNodes.reduce((sum, node) => sum + node.amount, 0);
+    } else if (region.buildingSlots) {
+        // New system: sum up resources from slots
+        totalResources = region.buildingSlots.reduce((sum, slot) => {
+            if (slot.slotProperty && slot.slotProperty.type === 'resource') {
+                return sum + slot.slotProperty.remainingAmount;
+            }
+            return sum;
+        }, 0);
+    }
     const totalResourcesEl = document.getElementById('total-resources');
     if (totalResourcesEl) totalResourcesEl.textContent = Math.floor(totalResources);
 
     updateResourceDisplay();
     updateTimeDisplay();
     updateProductionStats();
+
+    // Region tab always shows buildings now (battle moved to military tab)
     renderBuildingsGrid4x4(); // 渲染4x4建筑网格
 }
 
@@ -890,6 +1033,809 @@ function updateBuildingsList() {
     });
 }
 
+// ========================================
+// Battle Grid Rendering
+// ========================================
+function renderBattleGrid() {
+    const region = getCurrentRegion();
+    // Use military screen container for battle
+    const container = document.getElementById('buildings-grid-4x4-military');
+
+    if (!container) return;
+    if (!region || !region.battle) return;
+
+    container.innerHTML = '';
+    container.classList.add('battle-grid-active');
+
+    const battle = region.battle;
+
+    // Render 16 grid cells (4x4)
+    for (let i = 0; i < 16; i++) {
+        const cell = battle.grid[i];
+        const gridCell = document.createElement('div');
+        gridCell.className = 'battle-grid-cell';
+        gridCell.dataset.cellIndex = i;
+
+        // Enemy cells (0-7) vs Player cells (8-15)
+        if (i < 8) {
+            gridCell.classList.add('enemy-cell');
+        } else {
+            gridCell.classList.add('player-cell');
+        }
+
+        if (cell.troop) {
+            const troop = cell.troop;
+            const data = troop.side === 'enemy' ? GameData.enemies[troop.type] : GameData.units[troop.type];
+
+            // Initialize displayHP if not exists
+            if (troop.displayHP === undefined) {
+                troop.displayHP = troop.totalHP;
+            }
+
+            // Calculate first unit's HP for display (use displayHP for visual)
+            const currentDisplayCount = Math.ceil(troop.displayHP / troop.hpPerUnit);
+            const firstUnitHP = troop.displayHP - (currentDisplayCount - 1) * troop.hpPerUnit;
+            const hpPercent = troop.hpPerUnit > 0 ? (firstUnitHP / troop.hpPerUnit) * 100 : 0;
+            const cooldownPercent = cell.maxCooldown > 0 ? ((cell.maxCooldown - cell.cooldown) / cell.maxCooldown) * 100 : 0;
+
+            // Calculate ammo rounds for player units
+            const ammoRounds = calculateAmmoRounds(troop);
+            const ammoDisplay = ammoRounds !== null ? `<div class="troop-ammo">弹药：${ammoRounds} 轮</div>` : '';
+
+            // Get status text
+            const statusMap = {
+                'preparing': '准备中',
+                'attacking': '攻击中',
+                'no_ammo': '缺弹药',
+                'idle': '待机',
+                'recovering': '恢复中'
+            };
+            const statusText = statusMap[cell.status] || '待机';
+            const statusClass = 'troop-status-' + (cell.status || 'idle');
+
+            gridCell.innerHTML = `
+                <div class="troop-info">
+                    <div class="troop-name">${data.name}</div>
+                    <div class="troop-count">×${currentDisplayCount}</div>
+                    <div class="troop-status ${statusClass}">${statusText.replace('_', ' ')}</div>
+                    <div class="troop-hp-bar">
+                        <div class="troop-hp-fill" style="width: ${hpPercent}%"></div>
+                    </div>
+                    <div class="troop-stats">HP: ${Math.ceil(firstUnitHP)}/${troop.hpPerUnit}</div>
+                    ${ammoDisplay}
+                    <div class="troop-cooldown-bar">
+                        <div class="troop-cooldown-fill" style="width: ${cooldownPercent}%"></div>
+                    </div>
+                </div>
+            `;
+        } else {
+            gridCell.innerHTML = '<div class="empty-cell-label">' + (i < 8 ? '' : '空位') + '</div>';
+        }
+
+        container.appendChild(gridCell);
+    }
+
+    // Render battle status bars at top
+    renderBattleStatus();
+
+    // Render deployment buttons at bottom
+    renderDeploymentButtons();
+}
+
+// Update battle grid values without recreating DOM (prevents blinking and destroying bullets)
+function updateBattleGridValues() {
+    const region = getCurrentRegion();
+    const container = document.getElementById('buildings-grid-4x4-military');
+
+    if (!container) return;
+    if (!region || !region.battle) return;
+
+    const battle = region.battle;
+
+    // Update each cell's values
+    for (let i = 0; i < 16; i++) {
+        const cell = battle.grid[i];
+        const gridCell = container.querySelector(`[data-cell-index="${i}"]`);
+        if (!gridCell) continue;
+
+        if (cell.troop) {
+            const troop = cell.troop;
+
+            // Initialize displayHP if not exists
+            if (troop.displayHP === undefined) {
+                troop.displayHP = troop.totalHP;
+            }
+
+            // Calculate first unit's HP for display (use displayHP for visual)
+            const currentDisplayCount = Math.ceil(troop.displayHP / troop.hpPerUnit);
+            const firstUnitHP = troop.displayHP - (currentDisplayCount - 1) * troop.hpPerUnit;
+            const hpPercent = troop.hpPerUnit > 0 ? (firstUnitHP / troop.hpPerUnit) * 100 : 0;
+            const cooldownPercent = cell.maxCooldown > 0 ? ((cell.maxCooldown - cell.cooldown) / cell.maxCooldown) * 100 : 0;
+
+            // Update HP bar
+            const hpFill = gridCell.querySelector('.troop-hp-fill');
+            if (hpFill) hpFill.style.width = `${hpPercent}%`;
+
+            // Update HP text
+            const hpStats = gridCell.querySelector('.troop-stats');
+            if (hpStats) hpStats.textContent = `HP: ${Math.ceil(firstUnitHP)}/${troop.hpPerUnit}`;
+
+            // Update cooldown bar
+            const cooldownFill = gridCell.querySelector('.troop-cooldown-fill');
+            if (cooldownFill) cooldownFill.style.width = `${cooldownPercent}%`;
+
+            // Update status
+            const statusMap = {
+                'preparing': '准备中',
+                'attacking': '攻击中',
+                'no_ammo': '缺弹药',
+                'idle': '待机',
+                'recovering': '恢复中'
+            };
+            const statusText = statusMap[cell.status] || '待机';
+            const statusElement = gridCell.querySelector('.troop-status');
+            if (statusElement) {
+                statusElement.textContent = statusText;
+                statusElement.className = 'troop-status troop-status-' + (cell.status || 'idle');
+            }
+
+            // Update troop count (use display count)
+            const countElement = gridCell.querySelector('.troop-count');
+            if (countElement) countElement.textContent = `×${currentDisplayCount}`;
+
+            // Update ammo display
+            const ammoRounds = calculateAmmoRounds(troop);
+            const ammoElement = gridCell.querySelector('.troop-ammo');
+            if (ammoRounds !== null) {
+                if (ammoElement) {
+                    ammoElement.textContent = `弹药：${ammoRounds} 轮`;
+                } else if (troop.side === 'player') {
+                    // Add ammo display if it doesn't exist
+                    const troopInfo = gridCell.querySelector('.troop-info');
+                    const ammoDiv = document.createElement('div');
+                    ammoDiv.className = 'troop-ammo';
+                    ammoDiv.textContent = `弹药：${ammoRounds} 轮`;
+                    troopInfo.insertBefore(ammoDiv, troopInfo.querySelector('.troop-cooldown-bar'));
+                }
+            }
+        } else {
+            // Troop died or slot is empty - show empty label
+            const hasContent = gridCell.querySelector('.troop-info, .empty-cell-label');
+            if (hasContent && !gridCell.querySelector('.empty-cell-label')) {
+                // Cell had troop but now empty - update it
+                gridCell.innerHTML = '<div class="empty-cell-label">' + (i < 8 ? '' : '空位') + '</div>';
+            }
+        }
+    }
+
+    // Update battle status bar
+    updateBattleStatusBar();
+
+    // Update deployment buttons
+    updateDeploymentButtonCounts();
+}
+
+// Update only the status bar values
+function updateBattleStatusBar() {
+    const region = getCurrentRegion();
+    if (!region || !region.battle) return;
+
+    const container = document.getElementById('battle-status-container-military');
+    if (!container) return;
+
+    const battle = region.battle;
+
+    // Calculate totals (use displayHP for visual consistency)
+    let playerHP = 0, playerMaxHP = 0, enemyHP = 0, enemyMaxHP = 0;
+    battle.grid.forEach(cell => {
+        if (cell.troop) {
+            // Initialize displayHP if not exists
+            if (cell.troop.displayHP === undefined) {
+                cell.troop.displayHP = cell.troop.totalHP;
+            }
+
+            const currentDisplayCount = Math.ceil(cell.troop.displayHP / cell.troop.hpPerUnit);
+            const currentMaxHP = currentDisplayCount * cell.troop.hpPerUnit;
+            if (cell.troop.side === 'player') {
+                playerHP += cell.troop.displayHP;
+                playerMaxHP += currentMaxHP;
+            } else {
+                enemyHP += cell.troop.displayHP;
+                enemyMaxHP += currentMaxHP;
+            }
+        }
+    });
+
+    const totalHP = playerHP + enemyHP;
+    const playerPercent = totalHP > 0 ? (playerHP / totalHP) * 100 : 50;
+    const enemyPercent = 100 - playerPercent;
+
+    // Update bar widths
+    const enemyBar = container.querySelector('.enemy-bar');
+    const playerBar = container.querySelector('.player-bar');
+    if (enemyBar) enemyBar.style.width = `${enemyPercent}%`;
+    if (playerBar) playerBar.style.width = `${playerPercent}%`;
+
+    // Update text
+    const enemyHPText = container.querySelector('.enemy-hp');
+    const playerHPText = container.querySelector('.player-hp');
+    if (enemyHPText) enemyHPText.textContent = `敌军：${Math.ceil(enemyHP)}/${enemyMaxHP}`;
+    if (playerHPText) playerHPText.textContent = `我方：${Math.ceil(playerHP)}/${playerMaxHP}`;
+}
+
+// Update deployment button counts
+function updateDeploymentButtonCounts() {
+    const deployContainer = document.getElementById('deployment-buttons-container-military');
+    if (!deployContainer) return;
+
+    const buttons = deployContainer.querySelectorAll('.deploy-drone-btn');
+    buttons.forEach(btn => {
+        const unitId = btn.dataset.unitId;
+        if (unitId) {
+            const available = gameState.resources[unitId]?.current || 0;
+            const unitData = GameData.units[unitId];
+            if (unitData) {
+                btn.textContent = `${unitData.name} (${available})`;
+            }
+        }
+    });
+}
+
+function renderBattleStatus() {
+    const region = getCurrentRegion();
+    if (!region || !region.battle) return;
+
+    // Use military screen status container
+    const container = document.getElementById('battle-status-container-military');
+    if (!container) return;
+
+    const battle = region.battle;
+
+    // Calculate totals (use displayHP for visual consistency)
+    let playerHP = 0, playerMaxHP = 0, enemyHP = 0, enemyMaxHP = 0;
+    battle.grid.forEach(cell => {
+        if (cell.troop) {
+            // Initialize displayHP if not exists
+            if (cell.troop.displayHP === undefined) {
+                cell.troop.displayHP = cell.troop.totalHP;
+            }
+
+            const currentDisplayCount = Math.ceil(cell.troop.displayHP / cell.troop.hpPerUnit);
+            const currentMaxHP = currentDisplayCount * cell.troop.hpPerUnit;
+            if (cell.troop.side === 'player') {
+                playerHP += cell.troop.displayHP;
+                playerMaxHP += currentMaxHP;
+            } else {
+                enemyHP += cell.troop.displayHP;
+                enemyMaxHP += currentMaxHP;
+            }
+        }
+    });
+
+    const totalHP = playerHP + enemyHP;
+    const playerPercent = totalHP > 0 ? (playerHP / totalHP) * 100 : 50;
+    const enemyPercent = 100 - playerPercent;
+
+    container.innerHTML = `
+        <div class="battle-header-bars">
+            <div class="battle-status-bar">
+                <div class="bar-section enemy-bar" style="width: ${enemyPercent}%"></div>
+                <div class="bar-section player-bar" style="width: ${playerPercent}%"></div>
+            </div>
+            <div class="battle-status-text">
+                <span class="enemy-hp">敌军：${Math.ceil(enemyHP)}/${enemyMaxHP}</span>
+                <span class="player-hp">我方：${Math.ceil(playerHP)}/${playerMaxHP}</span>
+            </div>
+        </div>
+    `;
+}
+
+function renderDeploymentButtons() {
+    const region = getCurrentRegion();
+    if (!region || !region.battle) return;
+
+    // Use military screen deployment container
+    const deployContainer = document.getElementById('deployment-buttons-container-military');
+    if (!deployContainer) return;
+
+    deployContainer.innerHTML = '<h3>部署无人机</h3><div class="deployment-buttons"></div>';
+    const buttonsDiv = deployContainer.querySelector('.deployment-buttons');
+
+    // Show buttons for available drones
+    Object.entries(GameData.units).forEach(([unitId, unitData]) => {
+        const available = gameState.resources[unitId]?.current || 0;
+        if (available > 0) {
+            const btn = document.createElement('button');
+            btn.className = 'deploy-drone-btn';
+            btn.dataset.unitId = unitId; // Store unitId for updates
+            btn.textContent = `${unitData.name} (${available})`;
+            btn.onclick = () => deployDrone(unitId);
+            buttonsDiv.appendChild(btn);
+        }
+    });
+}
+
+// Deploy drone into battle
+function deployDrone(unitId) {
+    const region = getCurrentRegion();
+    if (!region || !region.battle) return;
+
+    const available = gameState.resources[unitId]?.current || 0;
+    if (available <= 0) {
+        showToast('没有可用的无人机', 'error');
+        return;
+    }
+
+    // Find first empty player cell (8-15)
+    const battle = region.battle;
+    let emptyCell = null;
+    for (let i = 8; i < 16; i++) {
+        if (!battle.grid[i].troop) {
+            emptyCell = i;
+            break;
+        }
+    }
+
+    if (emptyCell === null) {
+        showToast('没有空位！所有部署位置已占满', 'warning');
+        return;
+    }
+
+    const unitData = GameData.units[unitId];
+
+    // Deploy 10 drones at a time (or all available if less than 10)
+    const deployCount = Math.min(10, available);
+
+    // Remove from inventory
+    gameState.resources[unitId].current -= deployCount;
+
+    // Add to battle grid
+    const totalHP = unitData.combat.hp * deployCount;
+    battle.grid[emptyCell].troop = {
+        type: unitId,
+        side: 'player',
+        count: deployCount,
+        hpPerUnit: unitData.combat.hp,
+        totalHP: totalHP,
+        displayHP: totalHP, // Initialize displayHP for visual sync
+        incomingDamage: 0, // Track in-flight bullets
+        attack: unitData.combat.damage * 0.5 // Half attack power for slower battles
+    };
+    battle.grid[emptyCell].maxCooldown = getAttackInterval(unitId);
+    battle.grid[emptyCell].cooldown = 0; // Ready to attack
+
+    showToast(`已部署 ${deployCount} 个${unitData.name}`, 'success');
+
+    // Update the specific cell instead of full re-render
+    updateSingleBattleCell(emptyCell);
+    updateDeploymentButtonCounts(); // Update button counts
+}
+
+// Update a single battle cell's content
+function updateSingleBattleCell(cellIndex) {
+    const region = getCurrentRegion();
+    const container = document.getElementById('buildings-grid-4x4-military');
+    if (!container || !region || !region.battle) return;
+
+    const battle = region.battle;
+    const cell = battle.grid[cellIndex];
+    const gridCell = container.querySelector(`[data-cell-index="${cellIndex}"]`);
+    if (!gridCell) return;
+
+    if (cell.troop) {
+        const troop = cell.troop;
+        const data = troop.side === 'enemy' ? GameData.enemies[troop.type] : GameData.units[troop.type];
+
+        // Initialize displayHP if not exists
+        if (troop.displayHP === undefined) {
+            troop.displayHP = troop.totalHP;
+        }
+
+        // Calculate first unit's HP for display (use displayHP for visual)
+        const currentDisplayCount = Math.ceil(troop.displayHP / troop.hpPerUnit);
+        const firstUnitHP = troop.displayHP - (currentDisplayCount - 1) * troop.hpPerUnit;
+        const hpPercent = troop.hpPerUnit > 0 ? (firstUnitHP / troop.hpPerUnit) * 100 : 0;
+        const cooldownPercent = cell.maxCooldown > 0 ? ((cell.maxCooldown - cell.cooldown) / cell.maxCooldown) * 100 : 0;
+
+        // Calculate ammo rounds for player units
+        const ammoRounds = calculateAmmoRounds(troop);
+        const ammoDisplay = ammoRounds !== null ? `<div class="troop-ammo">弹药：${ammoRounds} 轮</div>` : '';
+
+        // Get status text
+        const statusMap = {
+            'preparing': '准备中',
+            'attacking': '攻击中',
+            'no_ammo': '缺弹药',
+            'idle': '待机',
+            'recovering': '恢复中'
+        };
+        const statusText = statusMap[cell.status] || '待机';
+        const statusClass = 'troop-status-' + (cell.status || 'idle');
+
+        gridCell.innerHTML = `
+            <div class="troop-info">
+                <div class="troop-name">${data.name}</div>
+                <div class="troop-count">×${currentDisplayCount}</div>
+                <div class="troop-status ${statusClass}">${statusText.replace('_', ' ')}</div>
+                <div class="troop-hp-bar">
+                    <div class="troop-hp-fill" style="width: ${hpPercent}%"></div>
+                </div>
+                <div class="troop-stats">HP: ${Math.ceil(firstUnitHP)}/${troop.hpPerUnit}</div>
+                ${ammoDisplay}
+                <div class="troop-cooldown-bar">
+                    <div class="troop-cooldown-fill" style="width: ${cooldownPercent}%"></div>
+                </div>
+            </div>
+        `;
+    } else {
+        gridCell.innerHTML = '<div class="empty-cell-label">' + (cellIndex < 8 ? '' : '空位') + '</div>';
+    }
+}
+
+function getAttackInterval(unitId) {
+    // Attack intervals for different drone types (quadrupled for quarter speed)
+    const intervals = {
+        'machinegun-drone': 6.0,
+        'heavy-machinegun-drone': 8.0,
+        'flamethrower-drone': 10.0,
+        'laser-drone': 7.2,
+        'plasma-drone': 8.8,
+        'artillery-drone': 12.0
+    };
+    return intervals[unitId] || 8.0;
+}
+
+// ========================================
+// Grid-Based Combat Logic
+// ========================================
+function processBattleGrid(region, deltaTime) {
+    if (!region.battle || region.conquered) return;
+
+    const battle = region.battle;
+    const grid = battle.grid;
+
+    // Check if there's any combat happening
+    let hasPlayer = false, hasEnemy = false;
+    grid.forEach(cell => {
+        if (cell.troop) {
+            if (cell.troop.side === 'player') hasPlayer = true;
+            else hasEnemy = true;
+        }
+    });
+
+    // Update lastCombatTime if there are both sides
+    if (hasPlayer && hasEnemy) {
+        battle.lastCombatTime = Date.now();
+    }
+
+    // Victory/defeat conditions
+    if (!hasEnemy && hasPlayer) {
+        conqueredRegion(region);
+        return;
+    }
+    if (!hasPlayer && hasEnemy) {
+        // Battle lost - do nothing, player can deploy more drones
+        return;
+    }
+
+    // Update cooldowns and process attacks
+    grid.forEach((cell, cellIndex) => {
+        if (!cell.troop || cell.troop.count <= 0) return;
+
+        // Determine unit status and check if it can attack
+        const targetSide = cell.troop.side === 'player' ? 'enemy' : 'player';
+        const hasTarget = selectBattleTarget(grid, targetSide, cellIndex) !== null;
+
+        let canAttack = true;
+        let hasAmmo = true;
+
+        // Check ammo for player units
+        if (cell.troop.side === 'player') {
+            const unitData = GameData.units[cell.troop.type];
+            if (unitData.combat.ammoPerTurn) {
+                for (let [ammoType, amount] of Object.entries(unitData.combat.ammoPerTurn)) {
+                    if ((gameState.resources[ammoType]?.current || 0) < amount * cell.troop.count) {
+                        hasAmmo = false;
+                        canAttack = false;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Set status
+        if (!hasTarget) {
+            cell.status = 'idle';
+        } else if (!hasAmmo) {
+            cell.status = 'no_ammo';
+        } else if (cell.cooldown > cell.maxCooldown * 0.3) {
+            cell.status = 'preparing';
+        } else {
+            cell.status = 'attacking';
+        }
+
+        // Only update cooldown if unit can attack
+        if (canAttack && hasTarget) {
+            cell.cooldown = Math.max(0, cell.cooldown - deltaTime);
+        }
+
+        // Attack when cooldown reaches 0
+        if (cell.cooldown <= 0 && canAttack && hasTarget) {
+            cell.cooldown = cell.maxCooldown; // Reset cooldown
+            const targetCellIndex = selectBattleTarget(grid, targetSide, cellIndex);
+
+            if (targetCellIndex !== null) {
+                executeGridAttack(grid, cellIndex, targetCellIndex);
+            }
+        }
+    });
+}
+
+function selectBattleTarget(grid, targetSide, attackerIndex) {
+    // Find all cells with troops of the target side
+    // Filter out targets that are already "doomed" by incoming damage
+    const validTargets = [];
+    grid.forEach((cell, index) => {
+        if (cell.troop && cell.troop.side === targetSide && cell.troop.count > 0) {
+            // Initialize incomingDamage if not exists
+            if (cell.troop.incomingDamage === undefined) {
+                cell.troop.incomingDamage = 0;
+            }
+
+            // Check if target will survive incoming damage
+            const effectiveHP = cell.troop.totalHP - cell.troop.incomingDamage;
+            if (effectiveHP > 0) {
+                validTargets.push(index);
+            }
+        }
+    });
+
+    if (validTargets.length === 0) return null;
+
+    // Prioritize targets based on position (closer cells)
+    // For enemies (top): prefer leftmost
+    // For players (bottom): prefer leftmost
+    return validTargets[0]; // Simple: just pick first available
+}
+
+// Calculate how many rounds of ammo are available for a troop
+function calculateAmmoRounds(troop) {
+    if (troop.side !== 'player') return null;
+
+    const unitData = GameData.units[troop.type];
+    if (!unitData.combat.ammoPerTurn) return null; // No ammo needed
+
+    let minRounds = Infinity;
+    for (let [ammoType, amountPerUnit] of Object.entries(unitData.combat.ammoPerTurn)) {
+        const available = gameState.resources[ammoType]?.current || 0;
+        const neededPerRound = amountPerUnit * troop.count;
+        const rounds = neededPerRound > 0 ? Math.floor(available / neededPerRound) : Infinity;
+        minRounds = Math.min(minRounds, rounds);
+    }
+
+    return minRounds === Infinity ? null : minRounds;
+}
+
+function executeGridAttack(grid, attackerIndex, targetIndex) {
+    const attacker = grid[attackerIndex].troop;
+    const target = grid[targetIndex].troop;
+
+    if (!attacker || !target) return;
+
+    // Initialize displayHP and incomingDamage if not exists
+    if (target.displayHP === undefined) {
+        target.displayHP = target.totalHP;
+    }
+    if (target.incomingDamage === undefined) {
+        target.incomingDamage = 0;
+    }
+
+    // CRITICAL: Check if target will survive incoming damage
+    // This prevents "overkill" when multiple units attack the same frame
+    const effectiveHP = target.totalHP - target.incomingDamage;
+    if (effectiveHP <= 0) {
+        // Target is already doomed by incoming bullets, don't waste attack
+        return;
+    }
+
+    // Check ammo for player units
+    if (attacker.side === 'player') {
+        const unitData = GameData.units[attacker.type];
+        if (unitData.combat.ammoPerTurn) {
+            let hasAmmo = true;
+            for (let [ammoType, amount] of Object.entries(unitData.combat.ammoPerTurn)) {
+                if ((gameState.resources[ammoType]?.current || 0) < amount * attacker.count) {
+                    hasAmmo = false;
+                    break;
+                }
+            }
+            if (!hasAmmo) return; // No ammo, can't attack
+
+            // Consume ammo
+            for (let [ammoType, amount] of Object.entries(unitData.combat.ammoPerTurn)) {
+                gameState.resources[ammoType].current -= amount * attacker.count;
+                gameState.resources[ammoType].current = Math.max(0, gameState.resources[ammoType].current);
+            }
+        }
+    }
+
+    // Calculate damage (HoMM style: attack × count)
+    const baseDamage = attacker.attack * attacker.count;
+
+    // Track this damage as "in-flight"
+    target.incomingDamage += baseDamage;
+
+    // Apply damage IMMEDIATELY to actual HP (prevent multiple attacks on dead targets)
+    target.totalHP -= baseDamage;
+    target.totalHP = Math.max(0, target.totalHP);
+
+    // Recalculate unit count based on remaining HP
+    target.count = Math.ceil(target.totalHP / target.hpPerUnit);
+
+    // Clean up if all units dead
+    if (target.count <= 0 || target.totalHP <= 0) {
+        grid[targetIndex].troop = null;
+        grid[targetIndex].cooldown = 0;
+    }
+
+    // Visual attack effect (will update displayHP when bullet arrives)
+    createAttackEffect(attackerIndex, targetIndex, baseDamage, attacker.side);
+}
+
+// Update display HP when bullet arrives (sync display with actual HP)
+function syncDisplayHP(targetIndex, damage) {
+    const region = getCurrentRegion();
+    if (!region || !region.battle) return;
+
+    const grid = region.battle.grid;
+    const target = grid[targetIndex].troop;
+
+    if (!target) return; // Target already dead
+
+    // Reduce incoming damage (bullet has landed)
+    if (target.incomingDamage === undefined) {
+        target.incomingDamage = 0;
+    }
+    target.incomingDamage -= damage;
+    target.incomingDamage = Math.max(0, target.incomingDamage); // Prevent negative
+
+    // Sync display HP with actual HP
+    target.displayHP = target.totalHP;
+}
+
+function createAttackEffect(fromIndex, toIndex, damage, attackerSide) {
+    const container = document.getElementById('buildings-grid-4x4-military');
+    if (!container) return;
+
+    const fromCell = container.children[fromIndex];
+    const toCell = container.children[toIndex];
+    if (!fromCell || !toCell) return;
+
+    // Save target's current displayed unit count for damage number
+    const region = getCurrentRegion();
+    let beforeDisplayCount = 0;
+    let hpPerUnit = 0;
+    if (region && region.battle && region.battle.grid[toIndex].troop) {
+        const target = region.battle.grid[toIndex].troop;
+        if (target.displayHP !== undefined) {
+            beforeDisplayCount = Math.ceil(target.displayHP / target.hpPerUnit);
+            hpPerUnit = target.hpPerUnit;
+        }
+    }
+
+    // Use offsetLeft/offsetTop for position relative to offsetParent
+    const x1 = fromCell.offsetLeft + fromCell.offsetWidth / 2;
+    const y1 = fromCell.offsetTop + fromCell.offsetHeight / 2;
+    const x2 = toCell.offsetLeft + toCell.offsetWidth / 2;
+    const y2 = toCell.offsetTop + toCell.offsetHeight / 2;
+
+    // Create bullet element
+    const bullet = document.createElement('div');
+    bullet.className = 'battle-bullet';
+    bullet.style.position = 'absolute';
+    bullet.style.left = x1 + 'px';
+    bullet.style.top = y1 + 'px';
+    bullet.style.pointerEvents = 'none';
+    // Set bullet color based on attacker side (enemy: red, player: gray)
+    bullet.style.backgroundColor = attackerSide === 'enemy' ? '#ff4444' : '#888888';
+    container.appendChild(bullet);
+
+    // Animate bullet (800ms flight time)
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const duration = 800;
+    const start = performance.now();
+
+    function animateBullet(now) {
+        const progress = Math.min(1, (now - start) / duration);
+        bullet.style.left = (x1 + dx * progress) + 'px';
+        bullet.style.top = (y1 + dy * progress) + 'px';
+
+        if (progress < 1) {
+            requestAnimationFrame(animateBullet);
+        } else {
+            bullet.remove();
+            // Sync display HP with actual HP when bullet arrives
+            syncDisplayHP(toIndex, damage);
+            // Show damage number on target cell
+            showDamageNumber(toCell, damage, toIndex, beforeDisplayCount, hpPerUnit);
+        }
+    }
+
+    requestAnimationFrame(animateBullet);
+}
+
+function showDamageNumber(cell, damage, targetIndex, beforeDisplayCount, hpPerUnit) {
+    const region = getCurrentRegion();
+
+    const dmg = document.createElement('div');
+    dmg.className = 'battle-damage-number';
+
+    // Calculate units killed
+    let unitsKilled = 0;
+    if (region && region.battle && beforeDisplayCount > 0 && hpPerUnit > 0) {
+        const target = region.battle.grid[targetIndex]?.troop;
+        if (target && target.displayHP !== undefined) {
+            const afterDisplayCount = Math.ceil(target.displayHP / hpPerUnit);
+            unitsKilled = beforeDisplayCount - afterDisplayCount;
+        } else {
+            // Target is dead, all units killed
+            unitsKilled = beforeDisplayCount;
+        }
+    }
+
+    // Format damage text with unit kills
+    if (unitsKilled > 0) {
+        dmg.textContent = `-${unitsKilled}单位 (-${Math.ceil(damage)})`;
+        dmg.style.color = '#ff6b6b'; // Brighter red for kills
+    } else {
+        dmg.textContent = `-${Math.ceil(damage)}`;
+    }
+
+    cell.appendChild(dmg);
+    setTimeout(() => dmg.remove(), 1000); // Match animation duration (1s)
+}
+
+function conqueredRegion(region) {
+    region.conquered = true;
+    region.battle = null; // Clear battle state
+    showToast(`区域 ${region.id} 已征服！现在可以在此建造。`, 'success', 3000);
+    updateMapScreen(); // Update map
+
+    // Switch to region screen to show buildings
+    showScreen('region');
+    updateRegionScreen();
+}
+
+// Heal bugs over time
+function healBugsIfNoCombat(region) {
+    if (!region.battle || region.conquered) return;
+
+    const battle = region.battle;
+    const timeSinceLastCombat = Date.now() - battle.lastCombatTime;
+
+    // Heal after 10 seconds of no combat
+    if (timeSinceLastCombat > 10000) {
+        battle.grid.forEach(cell => {
+            if (cell.troop && cell.troop.side === 'enemy') {
+                const currentMaxHP = cell.troop.count * cell.troop.hpPerUnit;
+                // Only heal and show recovering status if HP is below max
+                if (cell.troop.totalHP < currentMaxHP) {
+                    // Heal 1% of current max HP per second
+                    const healRate = currentMaxHP * 0.01; // 1% of current max HP per second
+                    cell.troop.totalHP = Math.min(currentMaxHP, cell.troop.totalHP + healRate / 60); // Per frame (60 FPS)
+                    // Sync displayHP with actual HP during healing
+                    cell.troop.displayHP = cell.troop.totalHP;
+                    cell.status = 'recovering';
+                } else {
+                    // Full health, show idle
+                    cell.status = 'idle';
+                }
+            }
+        });
+    }
+}
+
 // 渲染4x4建筑网格
 function renderBuildingsGrid4x4() {
     const region = getCurrentRegion();
@@ -902,7 +1848,18 @@ function renderBuildingsGrid4x4() {
 
     // 创建16个槽位
     for (let slotIndex = 0; slotIndex < 16; slotIndex++) {
-        const building = region.buildings[slotIndex];
+        // 兼容新旧数据结构
+        let building = null;
+        let slotProperty = null;
+
+        if (region.buildingSlots && region.buildingSlots[slotIndex]) {
+            // 新系统：使用buildingSlots
+            building = region.buildingSlots[slotIndex].building;
+            slotProperty = region.buildingSlots[slotIndex].slotProperty;
+        } else {
+            // 旧系统：使用buildings数组（向后兼容）
+            building = region.buildings[slotIndex];
+        }
 
         if (building) {
             // 有建筑：使用原来的building-card-compact样式
@@ -914,7 +1871,24 @@ function renderBuildingsGrid4x4() {
             const slotDiv = document.createElement('div');
             slotDiv.className = 'building-slot empty';
             slotDiv.setAttribute('data-slot-index', slotIndex);
-            slotDiv.innerHTML = `<div class="empty-slot-icon">+</div>`;
+
+            // 如果有槽位属性，显示资源信息
+            if (slotProperty && slotProperty.type === 'resource') {
+                const itemData = GameData.items[slotProperty.resourceType];
+                const itemName = itemData ? itemData.name : slotProperty.resourceType;
+                const remaining = Math.floor(slotProperty.remainingAmount || 0);
+                const total = Math.floor(slotProperty.totalAmount || 0);
+                slotDiv.innerHTML = `
+                    <div class="slot-property">
+                        <div class="slot-resource-name">${itemName}</div>
+                        <div class="slot-resource-amount">${remaining}/${total}</div>
+                    </div>
+                    <div class="slot-add-btn">+</div>
+                `;
+            } else {
+                slotDiv.innerHTML = `<div class="empty-slot-icon">+</div>`;
+            }
+
             slotDiv.onclick = () => openBuildMenuForSlot(slotIndex);
             container.appendChild(slotDiv);
         }
@@ -1059,11 +2033,29 @@ function createBuildingCard(building) {
 
     // 获取配方或资源信息
     let taskInfo = '';
-    if (template.category === 'mining' && building.resourceNodeIndex !== undefined) {
+    if (template.category === 'mining') {
         const region = getCurrentRegion();
-        const node = region.resourceNodes[building.resourceNodeIndex];
-        if (node) {
-            const item = GameData.items[node.type];
+        let resourceType = null;
+
+        // Try to find this building in buildingSlots (new system)
+        if (region.buildingSlots) {
+            const slotIndex = region.buildingSlots.findIndex(slot => slot.building && slot.building.id === building.id);
+            if (slotIndex >= 0 && region.buildingSlots[slotIndex].slotProperty) {
+                const slotProperty = region.buildingSlots[slotIndex].slotProperty;
+                if (slotProperty.type === 'resource') {
+                    resourceType = slotProperty.resourceType;
+                }
+            }
+        }
+
+        // Fallback to old system
+        if (!resourceType && building.resourceNodeIndex !== undefined) {
+            const node = region.resourceNodes[building.resourceNodeIndex];
+            if (node) resourceType = node.type;
+        }
+
+        if (resourceType) {
+            const item = GameData.items[resourceType];
             taskInfo = `<div class="building-card-compact-task">采集: ${item.name}</div>`;
         }
     } else if (template.category === 'production' && building.recipeId) {
@@ -1132,12 +2124,34 @@ function isBuildingActuallyWorking(building, template) {
     }
 
     // Mining buildings need resources
-    if (building.resourceNodeIndex !== undefined) {
-        const node = getCurrentRegion().resourceNodes[building.resourceNodeIndex];
-        if (node.amount <= 0) return false;
+    if (template.category === 'mining') {
+        const region = getCurrentRegion();
+        let resourceType = null;
+        let remainingAmount = null;
+
+        // Try to find this building in buildingSlots (new system)
+        if (region.buildingSlots) {
+            const slotIndex = region.buildingSlots.findIndex(slot => slot.building && slot.building.id === building.id);
+            if (slotIndex >= 0 && region.buildingSlots[slotIndex].slotProperty) {
+                const slotProperty = region.buildingSlots[slotIndex].slotProperty;
+                if (slotProperty.type === 'resource') {
+                    resourceType = slotProperty.resourceType;
+                    remainingAmount = slotProperty.remainingAmount;
+                }
+            }
+        }
+
+        // Fallback to old system
+        if (!resourceType && building.resourceNodeIndex !== undefined) {
+            const node = region.resourceNodes[building.resourceNodeIndex];
+            resourceType = node.type;
+            remainingAmount = node.amount;
+        }
+
+        if (!resourceType || remainingAmount <= 0) return false;
 
         // Check output not full
-        const res = gameState.resources[node.type];
+        const res = gameState.resources[resourceType];
         if (res && res.current >= res.max) {
             return false;
         }
@@ -1174,11 +2188,29 @@ function updateBuildingCardStatus(building) {
     const existingTaskInfo = card.querySelector('.building-card-compact-task');
     let newTaskInfo = '';
 
-    if (template.category === 'mining' && building.resourceNodeIndex !== undefined) {
+    if (template.category === 'mining') {
         const region = getCurrentRegion();
-        const node = region.resourceNodes[building.resourceNodeIndex];
-        if (node) {
-            const item = GameData.items[node.type];
+        let resourceType = null;
+
+        // Try to find this building in buildingSlots (new system)
+        if (region.buildingSlots) {
+            const slotIndex = region.buildingSlots.findIndex(slot => slot.building && slot.building.id === building.id);
+            if (slotIndex >= 0 && region.buildingSlots[slotIndex].slotProperty) {
+                const slotProperty = region.buildingSlots[slotIndex].slotProperty;
+                if (slotProperty.type === 'resource') {
+                    resourceType = slotProperty.resourceType;
+                }
+            }
+        }
+
+        // Fallback to old system
+        if (!resourceType && building.resourceNodeIndex !== undefined) {
+            const node = region.resourceNodes[building.resourceNodeIndex];
+            if (node) resourceType = node.type;
+        }
+
+        if (resourceType) {
+            const item = GameData.items[resourceType];
             newTaskInfo = `采集: ${item.name}`;
         }
     } else if (template.category === 'production' && building.recipeId) {
@@ -1264,21 +2296,44 @@ function getBuildingStatus(building, template) {
     }
 
     // 检查采矿建筑资源节点
-    if (building.resourceNodeIndex !== undefined) {
-        const node = getCurrentRegion().resourceNodes[building.resourceNodeIndex];
+    if (template.category === 'mining') {
+        const region = getCurrentRegion();
+        let resourceType = null;
+        let remainingAmount = null;
 
-        if (node.amount <= 0) {
-            status = 'disabled';
-            text = '资源耗尽';
-            return { status, text };
+        // Try to find this building in buildingSlots (new system)
+        if (region.buildingSlots) {
+            const slotIndex = region.buildingSlots.findIndex(slot => slot.building && slot.building.id === building.id);
+            if (slotIndex >= 0 && region.buildingSlots[slotIndex].slotProperty) {
+                const slotProperty = region.buildingSlots[slotIndex].slotProperty;
+                if (slotProperty.type === 'resource') {
+                    resourceType = slotProperty.resourceType;
+                    remainingAmount = slotProperty.remainingAmount;
+                }
+            }
         }
 
-        // 检查采矿建筑输出是否满载
-        const res = gameState.resources[node.type];
-        if (res && res.current >= res.max) {
-            status = 'warning';
-            text = '输出满载';
-            return { status, text };
+        // Fallback to old system
+        if (!resourceType && building.resourceNodeIndex !== undefined) {
+            const node = region.resourceNodes[building.resourceNodeIndex];
+            resourceType = node.type;
+            remainingAmount = node.amount;
+        }
+
+        if (resourceType) {
+            if (remainingAmount <= 0) {
+                status = 'disabled';
+                text = '资源耗尽';
+                return { status, text };
+            }
+
+            // 检查采矿建筑输出是否满载
+            const res = gameState.resources[resourceType];
+            if (res && res.current >= res.max) {
+                status = 'warning';
+                text = '输出满载';
+                return { status, text };
+            }
         }
     }
 
@@ -1396,54 +2451,83 @@ function showBuildingManageModal(building) {
         }
 
         // 更新资源节点信息
-        if (building.resourceNodeIndex !== undefined) {
-            const node = region.resourceNodes[building.resourceNodeIndex];
-            const itemName = GameData.items[node.type].name;
-            const remaining = Math.floor(node.amount);
+        if (template.category === 'mining') {
+            let resourceType = null;
+            let miningRate = null;
+            let remainingAmount = null;
+            let totalAmount = null;
 
-            // 计算产出速率（考虑电力效率）
-            const hasPower = gameState.power.production >= gameState.power.consumption;
-            const powerEfficiency = hasPower ? 1.0 : (gameState.power.production / Math.max(1, gameState.power.consumption));
-            const effectiveRate = node.rate * template.speed * (building.active ? powerEfficiency : 0);
-
-            // 计算耗尽时间
-            let depletionText = '';
-            if (effectiveRate > 0 && remaining > 0) {
-                const secondsRemaining = remaining / effectiveRate;
-                const minutes = Math.floor(secondsRemaining / 60);
-                const hours = Math.floor(minutes / 60);
-                if (hours > 0) {
-                    depletionText = `约 ${hours} 小时 ${minutes % 60} 分钟`;
-                } else {
-                    depletionText = `约 ${minutes} 分钟`;
+            // Try to find this building in buildingSlots (new system)
+            if (region.buildingSlots) {
+                const slotIndex = region.buildingSlots.findIndex(slot => slot.building && slot.building.id === building.id);
+                if (slotIndex >= 0 && region.buildingSlots[slotIndex].slotProperty) {
+                    const slotProperty = region.buildingSlots[slotIndex].slotProperty;
+                    if (slotProperty.type === 'resource') {
+                        resourceType = slotProperty.resourceType;
+                        miningRate = slotProperty.miningRate;
+                        remainingAmount = slotProperty.remainingAmount;
+                        totalAmount = slotProperty.totalAmount;
+                    }
                 }
-            } else if (remaining === 0) {
-                depletionText = '已耗尽';
             }
 
-            // 效率状态
-            let efficiencyHTML = '';
-            if (!building.active) {
-                efficiencyHTML = '<div class="building-property-warning">⏸ 已暂停</div>';
-            } else if (powerEfficiency < 1.0) {
-                efficiencyHTML = `<div class="building-property-warning">⚡ 电力不足 (${Math.floor(powerEfficiency * 100)}% 效率)</div>`;
-            } else if (remaining === 0) {
-                efficiencyHTML = '<div class="building-property-warning">⚠ 资源已耗尽</div>';
+            // Fallback to old system
+            if (!resourceType && building.resourceNodeIndex !== undefined) {
+                const node = region.resourceNodes[building.resourceNodeIndex];
+                resourceType = node.type;
+                miningRate = node.rate;
+                remainingAmount = node.amount;
+                totalAmount = node.initialAmount || node.amount; // Old system may not have initialAmount
+            }
+
+            if (resourceType) {
+                const itemName = GameData.items[resourceType].name;
+                const remaining = Math.floor(remainingAmount);
+
+                // 计算产出速率（考虑电力效率）
+                const hasPower = gameState.power.production >= gameState.power.consumption;
+                const powerEfficiency = hasPower ? 1.0 : (gameState.power.production / Math.max(1, gameState.power.consumption));
+                const effectiveRate = miningRate * template.speed * (building.active ? powerEfficiency : 0);
+
+                // 计算耗尽时间
+                let depletionText = '';
+                if (effectiveRate > 0 && remaining > 0) {
+                    const secondsRemaining = remaining / effectiveRate;
+                    const minutes = Math.floor(secondsRemaining / 60);
+                    const hours = Math.floor(minutes / 60);
+                    if (hours > 0) {
+                        depletionText = `约 ${hours} 小时 ${minutes % 60} 分钟`;
+                    } else {
+                        depletionText = `约 ${minutes} 分钟`;
+                    }
+                } else if (remaining === 0) {
+                    depletionText = '已耗尽';
+                }
+
+                // 效率状态
+                let efficiencyHTML = '';
+                if (!building.active) {
+                    efficiencyHTML = '<div class="building-property-warning">⏸ 已暂停</div>';
+                } else if (powerEfficiency < 1.0) {
+                    efficiencyHTML = `<div class="building-property-warning">⚡ 电力不足 (${Math.floor(powerEfficiency * 100)}% 效率)</div>`;
+                } else if (remaining === 0) {
+                    efficiencyHTML = '<div class="building-property-warning">⚠ 资源已耗尽</div>';
+                } else {
+                    efficiencyHTML = '<div class="building-property-success">✓ 全速采集</div>';
+                }
+
+                resourceNodeDiv.innerHTML = `
+                    <div class="building-section">
+                        <h4>采集资源</h4>
+                        <div class="building-property">${itemName}: 剩余 <span class="highlight">${remaining}</span>${totalAmount ? ` / ${Math.floor(totalAmount)}` : ''}</div>
+                        <div class="building-property">产出速度: <span class="highlight">${effectiveRate.toFixed(2)}/秒</span></div>
+                        ${depletionText ? `<div class="building-property">耗尽时间: ${depletionText}</div>` : ''}
+                        ${efficiencyHTML}
+                    </div>
+                `;
             } else {
-                efficiencyHTML = '<div class="building-property-success">✓ 全速采集</div>';
+                resourceNodeDiv.innerHTML = '';
             }
-
-            resourceNodeDiv.innerHTML = `
-                <div class="building-section">
-                    <h4>采集资源</h4>
-                    <div class="building-property">${itemName}: 剩余 <span class="highlight">${remaining}</span></div>
-                    <div class="building-property">产出速度: <span class="highlight">${effectiveRate.toFixed(2)}/秒</span></div>
-                    ${depletionText ? `<div class="building-property">耗尽时间: ${depletionText}</div>` : ''}
-                    ${efficiencyHTML}
-                </div>
-            `;
-        } else {
-            resourceNodeDiv.innerHTML = '';
         }
 
         // 更新配方信息
@@ -2481,25 +3565,68 @@ function isRegionAvailable(template) {
 }
 
 function onRegionClick(template, isConquered) {
-    if (isConquered) {
-        // 切换到该区域
-        gameState.currentRegionId = template.id;
+    // Check if region exists in gameState
+    let region = gameState.regions.find(r => r.id === template.id);
 
-        // 强制重建区域界面
-        const container = document.getElementById('buildings-list');
-        if (container) container.innerHTML = '';
+    if (!region) {
+        // Create new region from template
+        region = {
+            id: template.id,
+            name: template.name,
+            slotsTotal: template.slotsTotal,
+            slotsUsed: 0,
+            resourceNodes: template.resourceNodes.map(node => ({...node})),
+            buildings: [],
+            conquered: false
+        };
+        gameState.regions.push(region);
 
-        showToast(`已切换到 ${template.name}`, 'success');
-        showScreen('region');
+        // Initialize battle grid
+        initializeBattleGrid(region, template);
+    }
+
+    // Switch to this region
+    gameState.currentRegionId = template.id;
+
+    // Force rebuild region interface
+    const container = document.getElementById('buildings-list');
+    if (container) container.innerHTML = '';
+
+    // If region not conquered, show battle in military tab
+    // Otherwise show buildings in region tab
+    if (!region.conquered) {
+        ensureBattleState(region);
+        showToast(`战斗：${template.name}`, 'success');
+        showScreen('military');
+        updateMilitaryBattleScreen();
     } else {
-        // 开始战斗准备
-        showBattlePrepScreen(template);
+        showToast(`查看区域：${template.name}`, 'success');
+        showScreen('region');
+        updateRegionScreen();
     }
 }
 
 // ========================================
 // 军事界面
 // ========================================
+// Show battle screen in military tab
+function updateMilitaryBattleScreen() {
+    const region = getCurrentRegion();
+    if (!region || !region.battle) return;
+
+    // Switch to battle view
+    document.getElementById('military-idle-view').style.display = 'none';
+    document.getElementById('military-prep-view').style.display = 'none';
+    document.getElementById('military-battle-view').style.display = 'block';
+
+    // Update region name
+    const nameDisplay = document.getElementById('battle-region-name-display');
+    if (nameDisplay) nameDisplay.textContent = region.name;
+
+    // Render battle grid
+    renderBattleGrid();
+}
+
 // 完整重建军事界面（打开界面或解锁新科技时调用）
 function updateMilitaryScreen() {
     // 切换到空闲视图
@@ -2613,9 +3740,11 @@ function updateMilitaryScreenCounts() {
 }
 
 // ========================================
-// 战斗准备界面
+// 战斗准备界面 (OLD SYSTEM - DISABLED)
 // ========================================
 function showBattlePrepScreen(regionTemplate) {
+    // Old battle prep disabled - battles are now in-region
+    return;
     // 初始化战斗状态
     gameState.battle.targetRegion = regionTemplate;
     gameState.battle.selectedUnits = {};
@@ -2893,10 +4022,11 @@ function startBattle() {
 }
 
 // ========================================
-// 战斗界面
+// 战斗界面 (OLD SYSTEM - DISABLED)
 // ========================================
 function updateBattleScreen() {
-    if (!gameState.battle.active) return;
+    // Old battle system disabled
+    return;
 
     // 计算统计数据
     let totalPlayerHP = 0, maxPlayerHP = 0, totalPlayerCount = 0;
@@ -3063,10 +4193,11 @@ function updateBattleScreen() {
 }
 
 // ========================================
-// 实时战斗逻辑
+// 实时战斗逻辑 (OLD SYSTEM - DISABLED)
 // ========================================
 function processBattle(deltaTime) {
-    if (!gameState.battle.active) return;
+    // Old battle system disabled - now using grid-based battles
+    return;
 
     gameState.battle.battleTime += deltaTime;
 
@@ -3304,7 +4435,8 @@ function retreatFromBattle() {
 }
 
 function endBattle(victory, retreated = false) {
-    gameState.battle.active = false;
+    // Old battle system disabled
+    return;
 
     let title = '';
     let message = '';
@@ -3492,10 +4624,19 @@ function buildBuilding(buildingId) {
         return;
     }
 
-    // 如果有选中的槽位，检查槽位是否为空
-    if (selectedSlotIndex !== null && region.buildings[selectedSlotIndex]) {
-        showToast('该槽位已有建筑！', 'error');
-        return;
+    // 检查槽位是否为空（兼容新旧系统）
+    if (selectedSlotIndex !== null) {
+        if (region.buildingSlots && region.buildingSlots[selectedSlotIndex]) {
+            // 新系统：检查buildingSlots
+            if (region.buildingSlots[selectedSlotIndex].building) {
+                showToast('该槽位已有建筑！', 'error');
+                return;
+            }
+        } else if (region.buildings[selectedSlotIndex]) {
+            // 旧系统：检查buildings数组
+            showToast('该槽位已有建筑！', 'error');
+            return;
+        }
     }
 
     // 消耗资源
@@ -3513,14 +4654,38 @@ function buildBuilding(buildingId) {
         regionId: region.id
     };
 
-    // 如果是采矿建筑，显示资源选择界面
+    // 如果是采矿建筑，处理资源分配
     if (template.category === 'mining') {
-        showResourceSelectionModal(building, template);
-        return; // 等待玩家选择
+        // 新系统：如果槽位有资源属性，自动使用该资源
+        if (selectedSlotIndex !== null && region.buildingSlots && region.buildingSlots[selectedSlotIndex]) {
+            const slotProperty = region.buildingSlots[selectedSlotIndex].slotProperty;
+            if (slotProperty && slotProperty.type === 'resource') {
+                // 自动使用槽位的资源
+                building.resourceType = slotProperty.resourceType;
+                building.miningRate = template.rate;
+            } else {
+                showToast('该槽位没有资源！矿机只能建在资源槽上', 'error');
+                // 退还资源
+                if (template.cost) {
+                    for (let [resource, amount] of Object.entries(template.cost)) {
+                        gameState.resources[resource].current += amount;
+                    }
+                }
+                return;
+            }
+        } else {
+            // 旧系统：显示资源选择界面
+            showResourceSelectionModal(building, template);
+            return; // 等待玩家选择
+        }
     }
 
     // 将建筑放到指定槽位或数组末尾
     if (selectedSlotIndex !== null) {
+        // 新系统：同时更新buildingSlots和buildings
+        if (region.buildingSlots && region.buildingSlots[selectedSlotIndex]) {
+            region.buildingSlots[selectedSlotIndex].building = building;
+        }
         region.buildings[selectedSlotIndex] = building;
     } else {
         region.buildings.push(building);
@@ -3893,12 +5058,19 @@ function isTechResearched(techId) {
 // ========================================
 let gameLoopCounter = 0;
 function gameLoop(deltaTime) {
-    // 战斗逻辑（如果在战斗中）
-    processBattle(deltaTime);
+    // Grid-based battle logic for current region (only if game is initialized)
+    if (gameState.regions && gameState.regions.length > 0) {
+        const currentRegion = getCurrentRegion();
+        if (currentRegion && !currentRegion.conquered) {
+            processBattleGrid(currentRegion, deltaTime);
+            healBugsIfNoCombat(currentRegion);
 
-    // 战斗界面更新（实时）
-    if (gameState.battle.active) {
-        updateBattleScreen();
+            // Update battle display if battle view is visible in military screen
+            const battleView = document.getElementById('military-battle-view');
+            if (battleView && battleView.style.display !== 'none' && gameLoopCounter % 2 === 0) {
+                updateBattleGridValues(); // Use update instead of full render to prevent blinking
+            }
+        }
     }
 
     updateTime(deltaTime);
@@ -3953,11 +5125,11 @@ function gameLoop(deltaTime) {
 
         // 地图界面不需要每秒更新，只在打开时更新一次
 
-        // 更新战斗界面（如果在战斗中）
-        const battleScreen = document.getElementById('battle-screen');
-        if (battleScreen && battleScreen.style.display !== 'none') {
-            updateBattleScreen();
-        }
+        // Old battle screen disabled - now using grid-based battles
+        // const battleScreen = document.getElementById('battle-screen');
+        // if (battleScreen && battleScreen.style.display !== 'none') {
+        //     updateBattleScreen();
+        // }
     }
 
     // 每 10 秒打印一次调试信息
@@ -4161,8 +5333,35 @@ function produceResources(deltaTime) {
             const template = GameData.buildings[building.buildingId];
 
             // 采矿建筑
-            if (template.category === 'mining' && building.resourceNodeIndex !== undefined) {
-                const node = region.resourceNodes[building.resourceNodeIndex];
+            if (template.category === 'mining') {
+                // Try to find this building in buildingSlots (new system)
+                let slotProperty = null;
+                let resourceType = null;
+                let miningRate = null;
+                let remainingAmount = null;
+
+                if (region.buildingSlots) {
+                    const slotIndex = region.buildingSlots.findIndex(slot => slot.building && slot.building.id === building.id);
+                    if (slotIndex >= 0 && region.buildingSlots[slotIndex].slotProperty) {
+                        slotProperty = region.buildingSlots[slotIndex].slotProperty;
+                        if (slotProperty.type === 'resource') {
+                            resourceType = slotProperty.resourceType;
+                            miningRate = slotProperty.miningRate;
+                            remainingAmount = slotProperty.remainingAmount;
+                        }
+                    }
+                }
+
+                // Fallback to old system if slot property not found
+                if (!slotProperty && building.resourceNodeIndex !== undefined) {
+                    const node = region.resourceNodes[building.resourceNodeIndex];
+                    resourceType = node.type;
+                    miningRate = node.rate;
+                    remainingAmount = node.amount;
+                }
+
+                // Skip if no resource found
+                if (!resourceType) return;
 
             // Initialize mining progress
             if (building.miningProgress === undefined) {
@@ -4181,12 +5380,12 @@ function produceResources(deltaTime) {
             }
 
             // 检查资源节点是否耗尽
-            if (node.amount <= 0) {
+            if (remainingAmount <= 0) {
                 canWork = false;
             }
 
             // 检查输出空间是否满载
-            const res = gameState.resources[node.type];
+            const res = gameState.resources[resourceType];
             if (res && res.current >= res.max) {
                 canWork = false;
             }
@@ -4215,14 +5414,22 @@ function produceResources(deltaTime) {
             // Check if mining cycle complete
             if (building.miningProgress >= 1.0) {
                 // Produce one cycle's worth of resources (1 second worth)
-                const produceAmount = node.rate * template.speed;
-                const actualAmount = Math.min(produceAmount, node.amount);
+                const produceAmount = miningRate * template.speed;
+                const actualAmount = Math.min(produceAmount, remainingAmount);
 
-                node.amount -= actualAmount;
-                gameState.resources[node.type].current += actualAmount;
-                gameState.resources[node.type].current = Math.min(
-                    gameState.resources[node.type].current,
-                    gameState.resources[node.type].max
+                // Deduct from the appropriate source
+                if (slotProperty) {
+                    // New system: deduct from slot's remainingAmount
+                    slotProperty.remainingAmount -= actualAmount;
+                } else if (building.resourceNodeIndex !== undefined) {
+                    // Old system: deduct from region's resourceNodes
+                    region.resourceNodes[building.resourceNodeIndex].amount -= actualAmount;
+                }
+
+                gameState.resources[resourceType].current += actualAmount;
+                gameState.resources[resourceType].current = Math.min(
+                    gameState.resources[resourceType].current,
+                    gameState.resources[resourceType].max
                 );
 
                 // Reset progress (subtract 1.0 to keep overflow)
@@ -4368,15 +5575,39 @@ function updateStatistics() {
 
             const template = GameData.buildings[building.buildingId];
 
-            if (template.category === 'mining' && building.resourceNodeIndex !== undefined) {
+            if (template.category === 'mining') {
                 if (!hasPower && template.powerConsumption) return;
 
-                const node = region.resourceNodes[building.resourceNodeIndex];
-                if (node.amount <= 0) return;
+                // Try to find this building in buildingSlots (new system)
+                let resourceType = null;
+                let miningRate = null;
+                let remainingAmount = null;
 
-                const produceRate = node.rate * template.speed;
-                if (!stats.production[node.type]) stats.production[node.type] = 0;
-                stats.production[node.type] += produceRate;
+                if (region.buildingSlots) {
+                    const slotIndex = region.buildingSlots.findIndex(slot => slot.building && slot.building.id === building.id);
+                    if (slotIndex >= 0 && region.buildingSlots[slotIndex].slotProperty) {
+                        const slotProperty = region.buildingSlots[slotIndex].slotProperty;
+                        if (slotProperty.type === 'resource') {
+                            resourceType = slotProperty.resourceType;
+                            miningRate = slotProperty.miningRate;
+                            remainingAmount = slotProperty.remainingAmount;
+                        }
+                    }
+                }
+
+                // Fallback to old system if slot property not found
+                if (!resourceType && building.resourceNodeIndex !== undefined) {
+                    const node = region.resourceNodes[building.resourceNodeIndex];
+                    resourceType = node.type;
+                    miningRate = node.rate;
+                    remainingAmount = node.amount;
+                }
+
+                if (!resourceType || remainingAmount <= 0) return;
+
+                const produceRate = miningRate * template.speed;
+                if (!stats.production[resourceType]) stats.production[resourceType] = 0;
+                stats.production[resourceType] += produceRate;
             }
         });
 

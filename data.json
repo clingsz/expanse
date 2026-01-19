@@ -1,3268 +1,529 @@
 {
-  "items": {
+  "resources": {
     "iron-ore": {
       "id": "iron-ore",
       "name": "铁矿",
       "category": "raw",
-      "stackSize": 100,
-      "storageWeight": 1
+      "baseStorage": 500
     },
     "copper-ore": {
       "id": "copper-ore",
       "name": "铜矿",
       "category": "raw",
-      "stackSize": 100,
-      "storageWeight": 1
+      "baseStorage": 500
     },
     "coal": {
       "id": "coal",
-      "name": "煤",
+      "name": "煤炭",
       "category": "raw",
-      "stackSize": 100,
-      "storageWeight": 1
+      "baseStorage": 500
     },
     "stone": {
       "id": "stone",
       "name": "石材",
       "category": "raw",
-      "stackSize": 100,
-      "storageWeight": 1
-    },
-    "crude-oil": {
-      "id": "crude-oil",
-      "name": "原油",
-      "category": "fluid",
-      "stackSize": 100,
-      "storageWeight": 1
-    },
-    "uranium-ore": {
-      "id": "uranium-ore",
-      "name": "铀矿",
-      "category": "raw",
-      "stackSize": 50,
-      "storageWeight": 2
+      "baseStorage": 500
     },
     "iron-plate": {
       "id": "iron-plate",
       "name": "铁板",
       "category": "material",
-      "stackSize": 100,
-      "storageWeight": 1
+      "baseStorage": 300
     },
     "copper-plate": {
       "id": "copper-plate",
       "name": "铜板",
       "category": "material",
-      "stackSize": 100,
-      "storageWeight": 1
+      "baseStorage": 300
     },
-    "steel-plate": {
-      "id": "steel-plate",
-      "name": "钢板",
+    "steel": {
+      "id": "steel",
+      "name": "钢材",
       "category": "material",
-      "stackSize": 100,
-      "storageWeight": 1
+      "baseStorage": 200
     },
     "gear": {
       "id": "gear",
       "name": "齿轮",
-      "category": "component",
-      "stackSize": 100,
-      "storageWeight": 1
+      "category": "material",
+      "baseStorage": 200
     },
     "circuit": {
       "id": "circuit",
-      "name": "电路板",
-      "category": "component",
-      "stackSize": 100,
-      "storageWeight": 1
-    },
-    "advanced-circuit": {
-      "id": "advanced-circuit",
-      "name": "高级电路板",
-      "category": "component",
-      "stackSize": 100,
-      "storageWeight": 1
-    },
-    "plastic": {
-      "id": "plastic",
-      "name": "塑料",
+      "name": "电路",
       "category": "material",
-      "stackSize": 100,
-      "storageWeight": 1
+      "baseStorage": 200
     },
-    "battery": {
-      "id": "battery",
-      "name": "电池",
-      "category": "component",
-      "stackSize": 100,
-      "storageWeight": 1
-    },
-    "sulfuric-acid": {
-      "id": "sulfuric-acid",
-      "name": "硫酸",
-      "category": "fluid",
-      "stackSize": 100,
-      "storageWeight": 1
-    },
-    "heavy-oil": {
-      "id": "heavy-oil",
-      "name": "重油",
-      "category": "fluid",
-      "stackSize": 100,
-      "storageWeight": 1
-    },
-    "light-oil": {
-      "id": "light-oil",
-      "name": "轻油",
-      "category": "fluid",
-      "stackSize": 100,
-      "storageWeight": 1
-    },
-    "normal-bullet": {
-      "id": "normal-bullet",
-      "name": "普通子弹",
-      "category": "ammo",
-      "stackSize": 1000,
-      "storageWeight": 0.1
-    },
-    "piercing-bullet": {
-      "id": "piercing-bullet",
-      "name": "穿甲弹",
-      "category": "ammo",
-      "stackSize": 1000,
-      "storageWeight": 0.1
-    },
-    "explosive-bullet": {
-      "id": "explosive-bullet",
-      "name": "爆炸弹",
-      "category": "ammo",
-      "stackSize": 500,
-      "storageWeight": 0.2
-    },
-    "laser-charge": {
-      "id": "laser-charge",
-      "name": "激光充能包",
-      "category": "ammo",
-      "stackSize": 500,
-      "storageWeight": 0.2
-    },
-    "machinegun-drone": {
-      "id": "machinegun-drone",
-      "name": "机枪无人机",
-      "category": "unit",
-      "stackSize": 100,
-      "storageWeight": 10
-    },
-    "heavy-machinegun-drone": {
-      "id": "heavy-machinegun-drone",
-      "name": "重机枪无人机",
-      "category": "unit",
-      "stackSize": 100,
-      "storageWeight": 15
-    },
-    "flamethrower-drone": {
-      "id": "flamethrower-drone",
-      "name": "喷火无人机",
-      "category": "unit",
-      "stackSize": 100,
-      "storageWeight": 20
-    },
-    "laser-drone": {
-      "id": "laser-drone",
-      "name": "激光无人机",
-      "category": "unit",
-      "stackSize": 100,
-      "storageWeight": 20
-    },
-    "plasma-drone": {
-      "id": "plasma-drone",
-      "name": "等离子无人机",
-      "category": "unit",
-      "stackSize": 100,
-      "storageWeight": 25
-    },
-    "artillery-drone": {
-      "id": "artillery-drone",
-      "name": "炮台无人机",
-      "category": "unit",
-      "stackSize": 50,
-      "storageWeight": 50
-    },
-    "uranium-235": {
-      "id": "uranium-235",
-      "name": "铀235",
-      "category": "nuclear",
-      "stackSize": 50,
-      "storageWeight": 2
-    },
-    "uranium-238": {
-      "id": "uranium-238",
-      "name": "铀238",
-      "category": "nuclear",
-      "stackSize": 50,
-      "storageWeight": 2
-    },
-    "uranium-fuel-rod": {
-      "id": "uranium-fuel-rod",
-      "name": "铀燃料棒",
-      "category": "nuclear",
-      "stackSize": 50,
-      "storageWeight": 2
-    },
-    "science-basic": {
-      "id": "science-basic",
-      "name": "基础科研包",
-      "category": "science",
-      "stackSize": 100,
-      "storageWeight": 1
-    },
-    "science-automation": {
-      "id": "science-automation",
-      "name": "自动化科研包",
-      "category": "science",
-      "stackSize": 100,
-      "storageWeight": 1
-    },
-    "science-chemical": {
-      "id": "science-chemical",
-      "name": "化工科研包",
-      "category": "science",
-      "stackSize": 100,
-      "storageWeight": 1
-    },
-    "science-nuclear": {
-      "id": "science-nuclear",
-      "name": "核能科研包",
-      "category": "science",
-      "stackSize": 100,
-      "storageWeight": 1
-    },
-    "power": {
-      "id": "power",
+    "energy": {
+      "id": "energy",
       "name": "电力",
       "category": "energy",
-      "stackSize": 999999,
-      "storageWeight": 0
+      "baseStorage": 500
     },
-    "plasma-charge": {
-      "id": "plasma-charge",
-      "name": "等离子充能包",
-      "category": "ammo",
-      "stackSize": 500,
-      "storageWeight": 0.3
+    "space": {
+      "id": "space",
+      "name": "空间",
+      "category": "meta",
+      "baseStorage": 10
     },
-    "fusion-cell": {
-      "id": "fusion-cell",
-      "name": "聚变电池",
-      "category": "component",
-      "stackSize": 100,
-      "storageWeight": 2
-    },
-    "quantum-circuit": {
-      "id": "quantum-circuit",
-      "name": "量子电路",
-      "category": "component",
-      "stackSize": 50,
-      "storageWeight": 2
-    },
-    "nanomaterial": {
-      "id": "nanomaterial",
-      "name": "纳米材料",
-      "category": "material",
-      "stackSize": 100,
-      "storageWeight": 1
-    },
-    "antimatter-charge": {
-      "id": "antimatter-charge",
-      "name": "反物质充能",
-      "category": "ammo",
-      "stackSize": 100,
-      "storageWeight": 1
-    },
-    "science-fusion": {
-      "id": "science-fusion",
-      "name": "聚变科研包",
+    "science-red": {
+      "id": "science-red",
+      "name": "红包",
       "category": "science",
-      "stackSize": 100,
-      "storageWeight": 2
+      "baseStorage": 100,
+      "tier": 1
+    },
+    "science-green": {
+      "id": "science-green",
+      "name": "绿包",
+      "category": "science",
+      "baseStorage": 100,
+      "tier": 2
+    },
+    "science-blue": {
+      "id": "science-blue",
+      "name": "蓝包",
+      "category": "science",
+      "baseStorage": 100,
+      "tier": 3
     }
   },
   "buildings": {
-    "miner-mk1": {
-      "id": "miner-mk1",
-      "name": "矿机 Mk1",
+    "miner-iron": {
+      "id": "miner-iron",
+      "name": "铁矿机",
       "category": "mining",
-      "slots": 1,
-      "cost": {
-        "iron-plate": 10
-      },
-      "powerConsumption": 5,
-      "speed": 1,
-      "allowedResources": [
-        "iron-ore",
-        "copper-ore",
-        "coal",
-        "stone"
-      ],
-      "requiresTech": null,
-      "description": "基础采矿机，产出 5 资源/秒"
-    },
-    "miner-mk2": {
-      "id": "miner-mk2",
-      "name": "矿机 Mk2",
-      "category": "mining",
-      "slots": 1,
-      "cost": {
-        "iron-plate": 20,
-        "steel-plate": 5
-      },
-      "powerConsumption": 10,
-      "speed": 2,
-      "allowedResources": [
-        "iron-ore",
-        "copper-ore",
-        "coal",
-        "stone"
-      ],
-      "requiresTech": "advanced-mining",
-      "description": "高级采矿机，产出 10 资源/秒"
-    },
-    "miner-mk3": {
-      "id": "miner-mk3",
-      "name": "矿机 Mk3",
-      "category": "mining",
-      "slots": 1,
-      "cost": {
-        "iron-plate": 30,
-        "steel-plate": 15,
-        "circuit": 10
-      },
-      "powerConsumption": 20,
-      "speed": 4,
-      "allowedResources": [
-        "iron-ore",
-        "copper-ore",
-        "coal",
-        "stone"
-      ],
-      "requiresTech": "super-mining",
-      "description": "超级采矿机，产出 20 资源/秒"
-    },
-    "oil-extractor": {
-      "id": "oil-extractor",
-      "name": "采油机",
-      "category": "mining",
-      "slots": 1,
-      "cost": {
-        "iron-plate": 20,
-        "steel-plate": 10,
-        "gear": 5
-      },
-      "powerConsumption": 15,
-      "speed": 1,
-      "allowedResources": [
-        "crude-oil"
-      ],
-      "requiresTech": "chemical-tech",
-      "description": "采集原油，产出 5 原油/秒"
-    },
-    "uranium-miner": {
-      "id": "uranium-miner",
-      "name": "铀矿机",
-      "category": "mining",
-      "slots": 1,
-      "cost": {
-        "steel-plate": 30,
-        "circuit": 20
-      },
-      "powerConsumption": 25,
-      "speed": 1,
-      "allowedResources": [
-        "uranium-ore"
-      ],
-      "requiresTech": "nuclear-tech",
-      "description": "采集铀矿，产出 2 铀矿/秒"
-    },
-    "furnace": {
-      "id": "furnace",
-      "name": "熔炉",
-      "category": "production",
-      "slots": 1,
-      "cost": {
+      "spaceCost": 1,
+      "buildCost": {
         "stone": 5
       },
-      "powerConsumption": 5,
-      "speed": 1,
-      "requiresTech": null,
-      "description": "冶炼矿石，速度 2 个/秒"
-    },
-    "electric-furnace": {
-      "id": "electric-furnace",
-      "name": "电炉",
-      "category": "production",
-      "slots": 1,
-      "cost": {
-        "steel-plate": 10,
-        "circuit": 5
+      "consumes": {
+        "energy": 1
       },
-      "powerConsumption": 10,
-      "speed": 2,
-      "requiresTech": "advanced-smelting",
-      "description": "高级冶炼，速度 4 个/秒"
-    },
-    "assembler-mk1": {
-      "id": "assembler-mk1",
-      "name": "组装机 Mk1",
-      "category": "production",
-      "slots": 1,
-      "cost": {
-        "iron-plate": 10,
-        "gear": 5
+      "produces": {
+        "iron-ore": 2
       },
-      "powerConsumption": 10,
-      "speed": 1,
-      "requiresTech": null,
-      "description": "基础组装机，速度 1 配方/秒"
-    },
-    "assembler-mk2": {
-      "id": "assembler-mk2",
-      "name": "组装机 Mk2",
-      "category": "production",
-      "slots": 1,
-      "cost": {
-        "iron-plate": 20,
-        "steel-plate": 10,
-        "circuit": 5
-      },
-      "powerConsumption": 15,
-      "speed": 1.5,
-      "requiresTech": "automation-1",
-      "description": "高级组装机，速度 1.5 配方/秒"
-    },
-    "assembler-mk3": {
-      "id": "assembler-mk3",
-      "name": "组装机 Mk3",
-      "category": "production",
-      "slots": 1,
-      "cost": {
-        "iron-plate": 30,
-        "steel-plate": 20,
-        "circuit": 15
-      },
-      "powerConsumption": 25,
-      "speed": 2.5,
-      "requiresTech": "automation-3",
-      "description": "超级组装机，速度 2.5 配方/秒"
-    },
-    "chemical-plant": {
-      "id": "chemical-plant",
-      "name": "化工厂",
-      "category": "production",
-      "slots": 1,
-      "cost": {
-        "steel-plate": 20,
-        "circuit": 10,
-        "gear": 10
-      },
-      "powerConsumption": 20,
-      "speed": 1,
-      "requiresTech": "chemical-tech",
-      "description": "处理化工配方"
-    },
-    "nuclear-processor": {
-      "id": "nuclear-processor",
-      "name": "核处理厂",
-      "category": "production",
-      "slots": 1,
-      "cost": {
-        "steel-plate": 50,
-        "circuit": 30,
-        "gear": 20
-      },
-      "powerConsumption": 40,
-      "speed": 1,
-      "requiresTech": "nuclear-tech",
-      "description": "处理铀矿和核燃料"
-    },
-    "coal-power": {
-      "id": "coal-power",
-      "name": "燃煤发电站",
-      "category": "power",
-      "slots": 1,
-      "cost": {
-        "iron-plate": 10,
-        "gear": 5
-      },
-      "powerProduction": 20,
-      "fuelConsumption": {
-        "coal": 1
-      },
-      "requiresTech": "coal-power-tech",
-      "description": "燃烧煤炭发电，产出 20 电力/秒"
-    },
-    "wind-turbine": {
-      "id": "wind-turbine",
-      "name": "风力发电站",
-      "category": "power",
-      "slots": 1,
-      "cost": {
-        "iron-plate": 10
-      },
-      "powerProduction": 10,
-      "requiresTech": null,
-      "description": "风力发电，产出 10 电力/秒。无需燃料，不受昼夜影响，是最基础的发电建筑"
-    },
-    "solar-panel": {
-      "id": "solar-panel",
-      "name": "太阳能发电站",
-      "category": "power",
-      "slots": 1,
-      "cost": {
-        "steel-plate": 10,
-        "circuit": 5
-      },
-      "powerProduction": 25,
-      "dayOnly": true,
-      "requiresTech": "solar-power",
-      "description": "太阳能发电，白天 25 电力/秒，夜晚 0"
-    },
-    "oil-power": {
-      "id": "oil-power",
-      "name": "燃油发电站",
-      "category": "power",
-      "slots": 1,
-      "cost": {
-        "steel-plate": 20,
-        "circuit": 10
-      },
-      "powerProduction": 60,
-      "fuelConsumption": {
-        "heavy-oil": 2
-      },
-      "requiresTech": "chemical-tech",
-      "description": "燃烧重油发电，产出 60 电力/秒"
-    },
-    "nuclear-reactor": {
-      "id": "nuclear-reactor",
-      "name": "核反应堆",
-      "category": "power",
-      "slots": 1,
-      "cost": {
-        "steel-plate": 50,
-        "circuit": 30,
-        "gear": 20
-      },
-      "powerProduction": 300,
-      "fuelConsumption": {
-        "uranium-fuel-rod": 0.01
-      },
-      "requiresTech": "nuclear-power",
-      "description": "核能发电，产出 300 电力/秒"
-    },
-    "warehouse": {
-      "id": "warehouse",
-      "name": "仓库",
-      "category": "storage",
-      "slots": 1,
-      "cost": {
-        "iron-plate": 20,
-        "gear": 10
-      },
-      "storageBonus": 500,
-      "requiresTech": "storage-1",
-      "description": "增加资源储存上限 +500"
-    },
-    "large-warehouse": {
-      "id": "large-warehouse",
-      "name": "大型仓库",
-      "category": "storage",
-      "slots": 1,
-      "cost": {
-        "steel-plate": 20,
-        "circuit": 5
-      },
-      "storageBonus": 2000,
-      "requiresTech": "storage-2",
-      "description": "增加资源储存上限 +2000"
-    },
-    "battery-small": {
-      "id": "battery-small",
-      "name": "蓄电池",
-      "category": "storage",
-      "slots": 1,
-      "cost": {
-        "iron-plate": 10,
-        "battery": 5
-      },
-      "powerStorage": 1000,
-      "requiresTech": "energy-storage-1",
-      "description": "储存电力 +1000"
-    },
-    "battery-large": {
-      "id": "battery-large",
-      "name": "大型蓄电池",
-      "category": "storage",
-      "slots": 1,
-      "cost": {
-        "steel-plate": 20,
-        "battery": 20
-      },
-      "powerStorage": 5000,
-      "requiresTech": "energy-storage-2",
-      "description": "储存电力 +5000"
-    },
-    "research-lab": {
-      "id": "research-lab",
-      "name": "研究中心",
-      "category": "science",
-      "slots": 1,
-      "cost": {
-        "iron-plate": 20,
-        "circuit": 10,
-        "gear": 10
-      },
-      "powerConsumption": 10,
-      "researchSpeed": 10,
-      "requiresTech": null,
-      "description": "研究科技，速度 10 科研包/秒 (DEBUG加速)"
-    },
-    "advanced-research-lab": {
-      "id": "advanced-research-lab",
-      "name": "高级研究中心",
-      "category": "science",
-      "slots": 1,
-      "cost": {
-        "steel-plate": 30,
-        "advanced-circuit": 15,
-        "gear": 20
-      },
-      "powerConsumption": 20,
-      "researchSpeed": 20,
-      "requiresTech": "advanced-research",
-      "description": "研究科技，速度 20 科研包/秒 (DEBUG加速)"
-    },
-    "fusion-reactor": {
-      "id": "fusion-reactor",
-      "name": "聚变反应堆",
-      "category": "power",
-      "slots": 2,
-      "cost": {
-        "steel-plate": 100,
-        "advanced-circuit": 50,
-        "uranium-fuel-rod": 10
-      },
-      "powerProduction": 1000,
-      "fuelConsumption": {
-        "fusion-cell": 0.1
-      },
-      "requiresTech": "fusion-technology",
-      "description": "聚变能发电，产出 1000 电力/秒"
-    },
-    "quantum-research-lab": {
-      "id": "quantum-research-lab",
-      "name": "量子研究中心",
-      "category": "science",
-      "slots": 2,
-      "cost": {
-        "steel-plate": 100,
-        "quantum-circuit": 50,
-        "nanomaterial": 50
-      },
-      "powerConsumption": 50,
-      "researchSpeed": 50,
-      "requiresTech": "ultimate-research",
-      "description": "研究科技，速度 50 科研包/秒 (5倍速)"
-    }
-  },
-  "recipes": {
-    "iron-plate": {
-      "id": "iron-plate",
-      "name": "冶炼铁板",
-      "category": "smelting",
-      "buildingTypes": [
-        "furnace",
-        "electric-furnace"
-      ],
-      "time": 1,
-      "ingredients": {
-        "iron-ore": 1
-      },
-      "results": {
-        "iron-plate": 1
-      },
+      "cycleTime": 0.5,
       "requiresTech": null
     },
-    "copper-plate": {
-      "id": "copper-plate",
-      "name": "冶炼铜板",
-      "category": "smelting",
-      "buildingTypes": [
-        "furnace",
-        "electric-furnace"
-      ],
-      "time": 1,
-      "ingredients": {
-        "copper-ore": 1
+    "miner-copper": {
+      "id": "miner-copper",
+      "name": "铜矿机",
+      "category": "mining",
+      "spaceCost": 1,
+      "buildCost": {
+        "stone": 5
       },
-      "results": {
-        "copper-plate": 1
+      "consumes": {
+        "energy": 1
       },
+      "produces": {
+        "copper-ore": 2
+      },
+      "cycleTime": 0.5,
       "requiresTech": null
     },
-    "steel-plate": {
-      "id": "steel-plate",
-      "name": "冶炼钢板",
-      "category": "smelting",
-      "buildingTypes": [
-        "furnace",
-        "electric-furnace"
-      ],
-      "time": 5,
-      "ingredients": {
-        "iron-plate": 5
+    "miner-coal": {
+      "id": "miner-coal",
+      "name": "采煤机",
+      "category": "mining",
+      "spaceCost": 1,
+      "buildCost": {
+        "stone": 5
       },
-      "results": {
-        "steel-plate": 1
+      "consumes": {
+        "energy": 1
       },
-      "requiresTech": "steel-production"
-    },
-    "gear": {
-      "id": "gear",
-      "name": "齿轮",
-      "category": "crafting",
-      "buildingTypes": [
-        "assembler-mk1",
-        "assembler-mk2",
-        "assembler-mk3"
-      ],
-      "time": 1,
-      "ingredients": {
-        "iron-plate": 2
-      },
-      "results": {
-        "gear": 1
-      },
-      "requiresTech": null
-    },
-    "circuit": {
-      "id": "circuit",
-      "name": "电路板",
-      "category": "crafting",
-      "buildingTypes": [
-        "assembler-mk1",
-        "assembler-mk2",
-        "assembler-mk3"
-      ],
-      "time": 2,
-      "ingredients": {
-        "iron-plate": 1,
-        "copper-plate": 1
-      },
-      "results": {
-        "circuit": 1
-      },
-      "requiresTech": null
-    },
-    "advanced-circuit": {
-      "id": "advanced-circuit",
-      "name": "高级电路板",
-      "category": "crafting",
-      "buildingTypes": [
-        "assembler-mk2",
-        "assembler-mk3"
-      ],
-      "time": 5,
-      "ingredients": {
-        "circuit": 2,
-        "plastic": 4,
-        "copper-plate": 8
-      },
-      "results": {
-        "advanced-circuit": 1
-      },
-      "requiresTech": "advanced-electronics"
-    },
-    "plastic": {
-      "id": "plastic",
-      "name": "塑料",
-      "category": "chemical",
-      "buildingTypes": [
-        "chemical-plant"
-      ],
-      "time": 5,
-      "ingredients": {
-        "crude-oil": 10
-      },
-      "results": {
-        "plastic": 2
-      },
-      "requiresTech": "plastic-production"
-    },
-    "oil-refining": {
-      "id": "oil-refining",
-      "name": "石油精炼",
-      "category": "chemical",
-      "buildingTypes": [
-        "chemical-plant"
-      ],
-      "time": 3,
-      "ingredients": {
-        "crude-oil": 10
-      },
-      "results": {
-        "heavy-oil": 5,
-        "light-oil": 5
-      },
-      "requiresTech": "chemical-tech"
-    },
-    "battery": {
-      "id": "battery",
-      "name": "电池",
-      "category": "chemical",
-      "buildingTypes": [
-        "chemical-plant"
-      ],
-      "time": 3,
-      "ingredients": {
-        "iron-plate": 2,
-        "copper-plate": 2,
-        "sulfuric-acid": 5
-      },
-      "results": {
-        "battery": 1
-      },
-      "requiresTech": "battery-production"
-    },
-    "sulfuric-acid": {
-      "id": "sulfuric-acid",
-      "name": "硫酸",
-      "category": "chemical",
-      "buildingTypes": [
-        "chemical-plant"
-      ],
-      "time": 1,
-      "ingredients": {
-        "coal": 1
-      },
-      "results": {
-        "sulfuric-acid": 5
-      },
-      "requiresTech": "sulfuric-acid-production"
-    },
-    "normal-bullet": {
-      "id": "normal-bullet",
-      "name": "普通子弹",
-      "category": "military",
-      "buildingTypes": [
-        "assembler-mk1",
-        "assembler-mk2",
-        "assembler-mk3"
-      ],
-      "time": 1,
-      "ingredients": {
-        "iron-plate": 1
-      },
-      "results": {
-        "normal-bullet": 10
-      },
-      "requiresTech": "basic-military"
-    },
-    "piercing-bullet": {
-      "id": "piercing-bullet",
-      "name": "穿甲弹",
-      "category": "military",
-      "buildingTypes": [
-        "assembler-mk1",
-        "assembler-mk2",
-        "assembler-mk3"
-      ],
-      "time": 2,
-      "ingredients": {
-        "iron-plate": 2,
-        "steel-plate": 1
-      },
-      "results": {
-        "piercing-bullet": 5
-      },
-      "requiresTech": "piercing-ammo"
-    },
-    "explosive-bullet": {
-      "id": "explosive-bullet",
-      "name": "爆炸弹",
-      "category": "military",
-      "buildingTypes": [
-        "assembler-mk1",
-        "assembler-mk2",
-        "assembler-mk3"
-      ],
-      "time": 3,
-      "ingredients": {
-        "steel-plate": 1,
+      "produces": {
         "coal": 2
       },
-      "results": {
-        "explosive-bullet": 3
-      },
-      "requiresTech": "explosives"
-    },
-    "laser-charge": {
-      "id": "laser-charge",
-      "name": "激光充能包",
-      "category": "military",
-      "buildingTypes": [
-        "assembler-mk1",
-        "assembler-mk2",
-        "assembler-mk3"
-      ],
-      "time": 2,
-      "ingredients": {
-        "steel-plate": 2,
-        "battery": 1
-      },
-      "results": {
-        "laser-charge": 5
-      },
-      "requiresTech": "laser-weapons"
-    },
-    "machinegun-drone": {
-      "id": "machinegun-drone",
-      "name": "机枪无人机",
-      "category": "military",
-      "buildingTypes": [
-        "assembler-mk1",
-        "assembler-mk2",
-        "assembler-mk3"
-      ],
-      "time": 10,
-      "ingredients": {
-        "iron-plate": 5,
-        "circuit": 2
-      },
-      "results": {
-        "machinegun-drone": 1
-      },
-      "requiresTech": "basic-military"
-    },
-    "heavy-machinegun-drone": {
-      "id": "heavy-machinegun-drone",
-      "name": "重机枪无人机",
-      "category": "military",
-      "buildingTypes": [
-        "assembler-mk1",
-        "assembler-mk2",
-        "assembler-mk3"
-      ],
-      "time": 15,
-      "ingredients": {
-        "steel-plate": 10,
-        "circuit": 5
-      },
-      "results": {
-        "heavy-machinegun-drone": 1
-      },
-      "requiresTech": "piercing-ammo"
-    },
-    "flamethrower-drone": {
-      "id": "flamethrower-drone",
-      "name": "喷火无人机",
-      "category": "military",
-      "buildingTypes": [
-        "assembler-mk1",
-        "assembler-mk2",
-        "assembler-mk3"
-      ],
-      "time": 20,
-      "ingredients": {
-        "steel-plate": 15,
-        "circuit": 10
-      },
-      "results": {
-        "flamethrower-drone": 1
-      },
-      "requiresTech": "chemical-tech"
-    },
-    "laser-drone": {
-      "id": "laser-drone",
-      "name": "激光无人机",
-      "category": "military",
-      "buildingTypes": [
-        "assembler-mk2",
-        "assembler-mk3"
-      ],
-      "time": 25,
-      "ingredients": {
-        "steel-plate": 30,
-        "advanced-circuit": 15,
-        "battery": 10
-      },
-      "results": {
-        "laser-drone": 1
-      },
-      "requiresTech": "laser-weapons"
-    },
-    "plasma-drone": {
-      "id": "plasma-drone",
-      "name": "等离子无人机",
-      "category": "military",
-      "buildingTypes": [
-        "assembler-mk2",
-        "assembler-mk3"
-      ],
-      "time": 30,
-      "ingredients": {
-        "steel-plate": 40,
-        "advanced-circuit": 20,
-        "battery": 20
-      },
-      "results": {
-        "plasma-drone": 1
-      },
-      "requiresTech": "laser-weapons"
-    },
-    "artillery-drone": {
-      "id": "artillery-drone",
-      "name": "炮台无人机",
-      "category": "military",
-      "buildingTypes": [
-        "assembler-mk2",
-        "assembler-mk3"
-      ],
-      "time": 40,
-      "ingredients": {
-        "steel-plate": 50,
-        "advanced-circuit": 30,
-        "uranium-fuel-rod": 1
-      },
-      "results": {
-        "artillery-drone": 1
-      },
-      "requiresTech": "nuclear-power"
-    },
-    "uranium-processing": {
-      "id": "uranium-processing",
-      "name": "铀处理",
-      "category": "nuclear",
-      "buildingTypes": [
-        "nuclear-processor"
-      ],
-      "time": 10,
-      "ingredients": {
-        "uranium-ore": 10
-      },
-      "results": {
-        "uranium-235": 1,
-        "uranium-238": 9
-      },
-      "requiresTech": "uranium-processing"
-    },
-    "uranium-fuel-rod": {
-      "id": "uranium-fuel-rod",
-      "name": "铀燃料棒",
-      "category": "nuclear",
-      "buildingTypes": [
-        "nuclear-processor"
-      ],
-      "time": 20,
-      "ingredients": {
-        "uranium-235": 1,
-        "uranium-238": 19
-      },
-      "results": {
-        "uranium-fuel-rod": 10
-      },
-      "requiresTech": "uranium-fuel"
-    },
-    "science-basic": {
-      "id": "science-basic",
-      "name": "基础科研包",
-      "category": "science",
-      "buildingTypes": [
-        "assembler-mk1",
-        "assembler-mk2",
-        "assembler-mk3"
-      ],
-      "time": 5,
-      "ingredients": {
-        "gear": 1,
-        "copper-plate": 1
-      },
-      "results": {
-        "science-basic": 1
-      },
+      "cycleTime": 0.5,
       "requiresTech": null
     },
-    "science-automation": {
-      "id": "science-automation",
-      "name": "自动化科研包",
-      "category": "science",
-      "buildingTypes": [
-        "assembler-mk1",
-        "assembler-mk2",
-        "assembler-mk3"
-      ],
-      "time": 6,
-      "ingredients": {
-        "gear": 2,
+    "miner-stone": {
+      "id": "miner-stone",
+      "name": "采石场",
+      "category": "mining",
+      "spaceCost": 1,
+      "buildCost": {
+        "iron-plate": 5
+      },
+      "consumes": {
+        "energy": 1
+      },
+      "produces": {
+        "stone": 2
+      },
+      "cycleTime": 0.5,
+      "requiresTech": null
+    },
+    "furnace-iron-plate": {
+      "id": "furnace-iron-plate",
+      "name": "铁锻炉",
+      "category": "smelting",
+      "spaceCost": 1,
+      "buildCost": {
+        "stone": 10
+      },
+      "consumes": {
+        "iron-ore": 1,
+        "energy": 2
+      },
+      "produces": {
+        "iron-plate": 1
+      },
+      "cycleTime": 0.5,
+      "requiresTech": null
+    },
+    "furnace-copper-plate": {
+      "id": "furnace-copper-plate",
+      "name": "铜锻炉",
+      "category": "smelting",
+      "spaceCost": 1,
+      "buildCost": {
+        "stone": 10
+      },
+      "consumes": {
+        "copper-ore": 1,
+        "energy": 2
+      },
+      "produces": {
+        "copper-plate": 1
+      },
+      "cycleTime": 0.5,
+      "requiresTech": null
+    },
+    "furnace-steel": {
+      "id": "furnace-steel",
+      "name": "炼钢炉",
+      "category": "smelting",
+      "spaceCost": 2,
+      "buildCost": {
+        "stone": 20,
+        "iron-plate": 10
+      },
+      "consumes": {
+        "iron-plate": 2,
+        "coal": 1,
+        "energy": 4
+      },
+      "produces": {
+        "steel": 1
+      },
+      "cycleTime": 0.5,
+      "requiresTech": "steel-smelting"
+    },
+    "assembler-gear": {
+      "id": "assembler-gear",
+      "name": "齿轮厂",
+      "category": "crafting",
+      "spaceCost": 1,
+      "buildCost": {
+        "iron-plate": 15
+      },
+      "consumes": {
+        "iron-plate": 2,
+        "energy": 2
+      },
+      "produces": {
+        "gear": 1
+      },
+      "cycleTime": 0.5,
+      "requiresTech": null
+    },
+    "assembler-circuit": {
+      "id": "assembler-circuit",
+      "name": "电路厂",
+      "category": "crafting",
+      "spaceCost": 1,
+      "buildCost": {
+        "iron-plate": 10,
+        "copper-plate": 5
+      },
+      "consumes": {
+        "copper-plate": 2,
+        "iron-plate": 1,
+        "energy": 3
+      },
+      "produces": {
         "circuit": 1
       },
-      "results": {
-        "science-automation": 1
+      "cycleTime": 0.5,
+      "requiresTech": "basic-electronics"
+    },
+    "assembler-science-red": {
+      "id": "assembler-science-red",
+      "name": "红包厂",
+      "category": "crafting",
+      "spaceCost": 1,
+      "buildCost": {
+        "iron-plate": 15,
+        "copper-plate": 10
       },
+      "consumes": {
+        "iron-plate": 1,
+        "copper-plate": 1,
+        "energy": 3
+      },
+      "produces": {
+        "science-red": 1
+      },
+      "cycleTime": 1.0,
+      "requiresTech": null
+    },
+    "assembler-science-green": {
+      "id": "assembler-science-green",
+      "name": "绿包厂",
+      "category": "crafting",
+      "spaceCost": 2,
+      "buildCost": {
+        "iron-plate": 30,
+        "copper-plate": 20,
+        "gear": 10
+      },
+      "consumes": {
+        "gear": 1,
+        "circuit": 1,
+        "energy": 5
+      },
+      "produces": {
+        "science-green": 1
+      },
+      "cycleTime": 1.5,
       "requiresTech": "automation-1"
     },
-    "science-chemical": {
-      "id": "science-chemical",
-      "name": "化工科研包",
-      "category": "science",
-      "buildingTypes": [
-        "chemical-plant"
-      ],
-      "time": 12,
-      "ingredients": {
-        "sulfuric-acid": 1,
-        "battery": 2
-      },
-      "results": {
-        "science-chemical": 1
-      },
-      "requiresTech": "chemical-tech"
-    },
-    "science-nuclear": {
-      "id": "science-nuclear",
-      "name": "核能科研包",
-      "category": "science",
-      "buildingTypes": [
-        "nuclear-processor"
-      ],
-      "time": 30,
-      "ingredients": {
-        "uranium-fuel-rod": 1,
-        "advanced-circuit": 5
-      },
-      "results": {
-        "science-nuclear": 1
-      },
-      "requiresTech": "nuclear-tech"
-    },
-    "plasma-charge": {
-      "id": "plasma-charge",
-      "name": "等离子充能包",
-      "category": "military",
-      "buildingTypes": [
-        "assembler-mk2",
-        "assembler-mk3"
-      ],
-      "time": 3,
-      "ingredients": {
-        "advanced-circuit": 2,
-        "battery": 3,
-        "uranium-235": 0.1
-      },
-      "results": {
-        "plasma-charge": 5
-      },
-      "requiresTech": "advanced-military"
-    },
-    "fusion-cell": {
-      "id": "fusion-cell",
-      "name": "聚变电池",
-      "category": "nuclear",
-      "buildingTypes": [
-        "nuclear-processor"
-      ],
-      "time": 30,
-      "ingredients": {
-        "uranium-fuel-rod": 2,
-        "advanced-circuit": 10,
-        "battery": 10
-      },
-      "results": {
-        "fusion-cell": 1
-      },
-      "requiresTech": "fusion-technology"
-    },
-    "quantum-circuit": {
-      "id": "quantum-circuit",
-      "name": "量子电路",
+    "assembler-science-blue": {
+      "id": "assembler-science-blue",
+      "name": "蓝包厂",
       "category": "crafting",
-      "buildingTypes": [
-        "assembler-mk3"
-      ],
-      "time": 10,
-      "ingredients": {
-        "advanced-circuit": 5,
-        "fusion-cell": 1,
-        "plastic": 10
+      "spaceCost": 2,
+      "buildCost": {
+        "steel": 20,
+        "circuit": 15,
+        "gear": 10
       },
-      "results": {
-        "quantum-circuit": 1
+      "consumes": {
+        "steel": 1,
+        "circuit": 2,
+        "energy": 8
       },
-      "requiresTech": "quantum-computing"
+      "produces": {
+        "science-blue": 1
+      },
+      "cycleTime": 2.0,
+      "requiresTech": "basic-electronics"
     },
-    "nanomaterial": {
-      "id": "nanomaterial",
-      "name": "纳米材料",
-      "category": "crafting",
-      "buildingTypes": [
-        "assembler-mk3"
-      ],
-      "time": 15,
-      "ingredients": {
-        "steel-plate": 10,
-        "quantum-circuit": 2,
-        "plastic": 20
+    "generator-coal": {
+      "id": "generator-coal",
+      "name": "火电站",
+      "category": "power",
+      "spaceCost": 1,
+      "buildCost": {
+        "stone": 10,
+        "iron-plate": 5
       },
-      "results": {
-        "nanomaterial": 10
+      "consumes": {
+        "coal": 1
       },
-      "requiresTech": "nanofabrication"
+      "produces": {
+        "energy": 20
+      },
+      "cycleTime": 0.5,
+      "requiresTech": null
     },
-    "antimatter-charge": {
-      "id": "antimatter-charge",
-      "name": "反物质充能",
+    "generator-solar": {
+      "id": "generator-solar",
+      "name": "太阳能",
+      "category": "power",
+      "spaceCost": 2,
+      "buildCost": {
+        "copper-plate": 20,
+        "circuit": 10,
+        "steel": 5
+      },
+      "consumes": {},
+      "produces": {
+        "energy": 8
+      },
+      "cycleTime": 0.5,
+      "requiresTech": "solar-energy"
+    },
+    "turret-basic": {
+      "id": "turret-basic",
+      "name": "机枪塔",
+      "category": "defense",
+      "spaceCost": 1,
+      "buildCost": {
+        "iron-plate": 15,
+        "gear": 5,
+        "copper-plate": 5
+      },
+      "consumes": {},
+      "produces": {},
+      "cycleTime": 0,
+      "requiresTech": "military-1",
+      "defense": {
+        "hp": 100,
+        "attack": 5
+      }
+    },
+    "factory-drone-gun": {
+      "id": "factory-drone-gun",
+      "name": "无人机厂",
       "category": "military",
-      "buildingTypes": [
-        "nuclear-processor"
-      ],
-      "time": 50,
-      "ingredients": {
-        "uranium-235": 5,
-        "quantum-circuit": 10,
-        "fusion-cell": 5
+      "spaceCost": 2,
+      "buildCost": {
+        "iron-plate": 30,
+        "gear": 15,
+        "circuit": 10
       },
-      "results": {
-        "antimatter-charge": 1
+      "consumes": {
+        "iron-plate": 2,
+        "circuit": 1,
+        "energy": 10
       },
-      "requiresTech": "antimatter-weapons"
+      "produces": {},
+      "cycleTime": 2.0,
+      "requiresTech": "military-2",
+      "producesDrone": {
+        "type": "drone-gun",
+        "hp": 50,
+        "attack": 10
+      }
     },
-    "science-fusion": {
-      "id": "science-fusion",
-      "name": "聚变科研包",
-      "category": "science",
-      "buildingTypes": [
-        "nuclear-processor"
-      ],
-      "time": 50,
-      "ingredients": {
-        "fusion-cell": 2,
-        "quantum-circuit": 5,
-        "nanomaterial": 10
+    "expander": {
+      "id": "expander",
+      "name": "扩张器",
+      "category": "infrastructure",
+      "spaceCost": 0,
+      "buildCost": {
+        "iron-plate": 30,
+        "copper-plate": 20,
+        "gear": 10
       },
-      "results": {
-        "science-fusion": 1
-      },
-      "requiresTech": "fusion-technology"
+      "consumes": {},
+      "produces": {},
+      "cycleTime": 0,
+      "requiresTech": null,
+      "special": "expander",
+      "expandAmount": 5,
+      "threatIncrease": 1
     }
   },
   "technologies": {
     "automation-1": {
       "id": "automation-1",
-      "name": "自动化 I",
-      "category": "automation",
-      "cost": {
-        "science-basic": 50
-      },
-      "researchTime": 25,
+      "name": "自动化1",
+      "description": "解锁绿包生产",
       "prerequisites": [],
-      "unlocks": {
-        "buildings": [
-          "assembler-mk2"
-        ],
-        "recipes": [
-          "science-automation"
-        ]
-      },
-      "description": "解锁组装机 Mk2 和自动化科研包"
-    },
-    "automation-2": {
-      "id": "automation-2",
-      "name": "自动化 II",
-      "category": "automation",
       "cost": {
-        "science-basic": 100,
-        "science-automation": 50
+        "science-red": 10
       },
-      "researchTime": 50,
+      "tier": 1,
+      "unlocks": [
+        "assembler-science-green"
+      ]
+    },
+    "basic-electronics": {
+      "id": "basic-electronics",
+      "name": "电子学",
+      "description": "解锁电路和蓝包生产",
       "prerequisites": [
         "automation-1"
       ],
-      "unlocks": {
-        "buildings": [
-          "assembler-mk3"
-        ]
-      },
-      "description": "解锁组装机 Mk3，速度 +100%"
-    },
-    "automation-3": {
-      "id": "automation-3",
-      "name": "自动化 III",
-      "category": "automation",
       "cost": {
-        "science-basic": 200,
-        "science-automation": 150
+        "science-red": 15,
+        "science-green": 10
       },
-      "researchTime": 100,
+      "tier": 2,
+      "unlocks": [
+        "assembler-circuit",
+        "assembler-science-blue"
+      ]
+    },
+    "steel-smelting": {
+      "id": "steel-smelting",
+      "name": "炼钢术",
+      "description": "解锁钢材生产",
       "prerequisites": [
-        "automation-2"
+        "automation-1"
       ],
-      "unlocks": {},
-      "description": "进一步提升自动化能力"
-    },
-    "advanced-mining": {
-      "id": "advanced-mining",
-      "name": "高级采矿",
-      "category": "mining",
       "cost": {
-        "science-basic": 100
+        "science-red": 20,
+        "science-green": 10
       },
-      "researchTime": 50,
-      "prerequisites": [],
-      "unlocks": {
-        "buildings": [
-          "miner-mk2"
-        ]
-      },
-      "description": "解锁矿机 Mk2，效率 +100%"
+      "tier": 2,
+      "unlocks": [
+        "furnace-steel"
+      ]
     },
-    "super-mining": {
-      "id": "super-mining",
-      "name": "超级采矿",
-      "category": "mining",
-      "cost": {
-        "science-basic": 200,
-        "science-automation": 100
-      },
-      "researchTime": 100,
-      "prerequisites": [
-        "advanced-mining"
-      ],
-      "unlocks": {
-        "buildings": [
-          "miner-mk3"
-        ]
-      },
-      "description": "解锁矿机 Mk3，效率 +300%"
-    },
-    "steel-production": {
-      "id": "steel-production",
-      "name": "钢材生产",
-      "category": "production",
-      "cost": {
-        "science-basic": 50
-      },
-      "researchTime": 25,
-      "prerequisites": [],
-      "unlocks": {
-        "recipes": [
-          "steel-plate"
-        ]
-      },
-      "description": "解锁钢板冶炼配方"
-    },
-    "advanced-smelting": {
-      "id": "advanced-smelting",
-      "name": "高级冶炼",
-      "category": "production",
-      "cost": {
-        "science-basic": 150,
-        "science-automation": 75
-      },
-      "researchTime": 75,
-      "prerequisites": [
-        "steel-production"
-      ],
-      "unlocks": {
-        "buildings": [
-          "electric-furnace"
-        ]
-      },
-      "description": "解锁电炉，速度 +100%"
-    },
-    "coal-power-tech": {
-      "id": "coal-power-tech",
-      "name": "燃煤发电",
-      "category": "power",
-      "cost": {
-        "science-basic": 30
-      },
-      "researchTime": 150,
-      "prerequisites": [],
-      "unlocks": {
-        "buildings": [
-          "coal-power"
-        ]
-      },
-      "description": "解锁燃煤发电站（需要区域2的煤炭资源）"
-    },
-    "solar-power": {
-      "id": "solar-power",
+    "solar-energy": {
+      "id": "solar-energy",
       "name": "太阳能",
-      "category": "power",
-      "cost": {
-        "science-basic": 100
-      },
-      "researchTime": 50,
+      "description": "解锁清洁能源",
       "prerequisites": [
-        "steel-production"
+        "basic-electronics"
       ],
-      "unlocks": {
-        "buildings": [
-          "solar-panel"
-        ]
-      },
-      "description": "解锁太阳能发电站"
-    },
-    "chemical-tech": {
-      "id": "chemical-tech",
-      "name": "化工科技",
-      "category": "chemical",
       "cost": {
-        "science-basic": 200,
-        "science-automation": 100
+        "science-red": 20,
+        "science-green": 20,
+        "science-blue": 10
       },
-      "researchTime": 100,
-      "prerequisites": [
-        "automation-1",
-        "steel-production"
-      ],
-      "unlocks": {
-        "buildings": [
-          "chemical-plant",
-          "oil-extractor",
-          "oil-power"
-        ],
-        "recipes": [
-          "oil-refining",
-          "science-chemical",
-          "flamethrower-drone"
-        ]
-      },
-      "description": "解锁化工厂和石油加工"
+      "tier": 3,
+      "unlocks": [
+        "generator-solar"
+      ]
     },
-    "plastic-production": {
-      "id": "plastic-production",
-      "name": "塑料生产",
-      "category": "chemical",
-      "cost": {
-        "science-basic": 100,
-        "science-chemical": 50
-      },
-      "researchTime": 50,
-      "prerequisites": [
-        "chemical-tech"
-      ],
-      "unlocks": {
-        "recipes": [
-          "plastic"
-        ]
-      },
-      "description": "解锁塑料生产"
-    },
-    "sulfuric-acid-production": {
-      "id": "sulfuric-acid-production",
-      "name": "硫酸生产",
-      "category": "chemical",
-      "cost": {
-        "science-basic": 100,
-        "science-chemical": 50
-      },
-      "researchTime": 50,
-      "prerequisites": [
-        "chemical-tech"
-      ],
-      "unlocks": {
-        "recipes": [
-          "sulfuric-acid"
-        ]
-      },
-      "description": "解锁硫酸生产"
-    },
-    "battery-production": {
-      "id": "battery-production",
-      "name": "电池生产",
-      "category": "chemical",
-      "cost": {
-        "science-basic": 150,
-        "science-chemical": 75
-      },
-      "researchTime": 75,
-      "prerequisites": [
-        "sulfuric-acid-production"
-      ],
-      "unlocks": {
-        "recipes": [
-          "battery"
-        ]
-      },
-      "description": "解锁电池生产"
-    },
-    "advanced-electronics": {
-      "id": "advanced-electronics",
-      "name": "高级电子",
-      "category": "electronics",
-      "cost": {
-        "science-basic": 200,
-        "science-automation": 100,
-        "science-chemical": 100
-      },
-      "researchTime": 100,
-      "prerequisites": [
-        "plastic-production"
-      ],
-      "unlocks": {
-        "recipes": [
-          "advanced-circuit"
-        ]
-      },
-      "description": "解锁高级电路板"
-    },
-    "nuclear-tech": {
-      "id": "nuclear-tech",
-      "name": "核能科技",
-      "category": "nuclear",
-      "cost": {
-        "science-basic": 300,
-        "science-automation": 200,
-        "science-chemical": 200
-      },
-      "researchTime": 200,
-      "prerequisites": [
-        "advanced-electronics"
-      ],
-      "unlocks": {
-        "buildings": [
-          "uranium-miner",
-          "nuclear-processor"
-        ],
-        "recipes": [
-          "science-nuclear"
-        ]
-      },
-      "description": "解锁铀矿开采和核处理"
-    },
-    "uranium-processing": {
-      "id": "uranium-processing",
-      "name": "铀处理",
-      "category": "nuclear",
-      "cost": {
-        "science-nuclear": 100
-      },
-      "researchTime": 100,
-      "prerequisites": [
-        "nuclear-tech"
-      ],
-      "unlocks": {
-        "recipes": [
-          "uranium-processing"
-        ]
-      },
-      "description": "解锁铀矿分离"
-    },
-    "uranium-fuel": {
-      "id": "uranium-fuel",
-      "name": "铀燃料",
-      "category": "nuclear",
-      "cost": {
-        "science-nuclear": 150
-      },
-      "researchTime": 150,
-      "prerequisites": [
-        "uranium-processing"
-      ],
-      "unlocks": {
-        "recipes": [
-          "uranium-fuel-rod"
-        ]
-      },
-      "description": "解锁铀燃料棒制造"
-    },
-    "nuclear-power": {
-      "id": "nuclear-power",
-      "name": "核能发电",
-      "category": "nuclear",
-      "cost": {
-        "science-nuclear": 200
-      },
-      "researchTime": 200,
-      "prerequisites": [
-        "uranium-fuel"
-      ],
-      "unlocks": {
-        "buildings": [
-          "nuclear-reactor"
-        ]
-      },
-      "description": "解锁核反应堆"
-    },
-    "basic-military": {
-      "id": "basic-military",
-      "name": "基础军事",
-      "category": "military",
-      "cost": {
-        "science-basic": 50
-      },
-      "researchTime": 25,
+    "military-1": {
+      "id": "military-1",
+      "name": "军事1",
+      "description": "解锁基础防御",
       "prerequisites": [],
-      "unlocks": {
-        "recipes": [
-          "normal-bullet",
-          "machinegun-drone"
-        ]
-      },
-      "description": "解锁基础弹药和无人机配方"
-    },
-    "piercing-ammo": {
-      "id": "piercing-ammo",
-      "name": "穿甲弹",
-      "category": "military",
       "cost": {
-        "science-basic": 100
+        "science-red": 15
       },
-      "researchTime": 50,
+      "tier": 1,
+      "unlocks": [
+        "turret-basic"
+      ]
+    },
+    "military-2": {
+      "id": "military-2",
+      "name": "军事2",
+      "description": "解锁无人机生产",
       "prerequisites": [
-        "steel-production",
-        "basic-military"
+        "military-1",
+        "basic-electronics"
       ],
-      "unlocks": {
-        "recipes": [
-          "piercing-bullet",
-          "heavy-machinegun-drone"
-        ]
-      },
-      "description": "解锁穿甲弹和重机枪无人机"
-    },
-    "explosives": {
-      "id": "explosives",
-      "name": "爆炸物",
-      "category": "military",
       "cost": {
-        "science-basic": 150,
-        "science-automation": 100
+        "science-red": 30,
+        "science-green": 20,
+        "science-blue": 15
       },
-      "researchTime": 75,
-      "prerequisites": [
-        "piercing-ammo"
-      ],
-      "unlocks": {
-        "recipes": [
-          "explosive-bullet"
-        ]
-      },
-      "description": "解锁爆炸弹，范围伤害"
-    },
-    "laser-weapons": {
-      "id": "laser-weapons",
-      "name": "激光武器",
-      "category": "military",
-      "cost": {
-        "science-basic": 200,
-        "science-chemical": 100
-      },
-      "researchTime": 100,
-      "prerequisites": [
-        "battery-production"
-      ],
-      "unlocks": {
-        "recipes": [
-          "laser-charge",
-          "laser-drone",
-          "plasma-drone"
-        ]
-      },
-      "description": "解锁激光充能包"
-    },
-    "storage-1": {
-      "id": "storage-1",
-      "name": "仓储 I",
-      "category": "infrastructure",
-      "cost": {
-        "science-basic": 30
-      },
-      "researchTime": 150,
-      "prerequisites": [],
-      "unlocks": {
-        "buildings": [
-          "warehouse"
-        ]
-      },
-      "description": "解锁基础仓库，扩展储存空间"
-    },
-    "storage-2": {
-      "id": "storage-2",
-      "name": "仓储 II",
-      "category": "infrastructure",
-      "cost": {
-        "science-basic": 100
-      },
-      "researchTime": 50,
-      "prerequisites": [
-        "storage-1"
-      ],
-      "unlocks": {
-        "buildings": [
-          "large-warehouse"
-        ]
-      },
-      "description": "解锁大型仓库"
-    },
-    "energy-storage-1": {
-      "id": "energy-storage-1",
-      "name": "储能技术 I",
-      "category": "infrastructure",
-      "cost": {
-        "science-basic": 100
-      },
-      "researchTime": 50,
-      "prerequisites": [],
-      "unlocks": {
-        "buildings": [
-          "battery-small"
-        ]
-      },
-      "description": "解锁蓄电池"
-    },
-    "energy-storage-2": {
-      "id": "energy-storage-2",
-      "name": "储能技术 II",
-      "category": "infrastructure",
-      "cost": {
-        "science-basic": 200,
-        "science-automation": 100
-      },
-      "researchTime": 100,
-      "prerequisites": [
-        "energy-storage-1",
-        "battery-production"
-      ],
-      "unlocks": {
-        "buildings": [
-          "battery-large"
-        ]
-      },
-      "description": "解锁大型蓄电池"
-    },
-    "advanced-research": {
-      "id": "advanced-research",
-      "name": "高级研究",
-      "category": "infrastructure",
-      "cost": {
-        "science-basic": 200,
-        "science-automation": 100,
-        "science-chemical": 100
-      },
-      "researchTime": 100,
-      "prerequisites": [
-        "advanced-electronics"
-      ],
-      "unlocks": {
-        "buildings": [
-          "advanced-research-lab"
-        ]
-      },
-      "description": "解锁高级研究中心，速度 +100%"
-    },
-    "advanced-military": {
-      "id": "advanced-military",
-      "name": "高级军事",
-      "category": "military",
-      "cost": {
-        "science-basic": 300,
-        "science-automation": 200,
-        "science-chemical": 200,
-        "science-nuclear": 100
-      },
-      "researchTime": 200,
-      "prerequisites": [
-        "laser-weapons",
-        "nuclear-tech"
-      ],
-      "unlocks": {
-        "recipes": [
-          "plasma-charge",
-          "plasma-drone"
-        ]
-      },
-      "description": "解锁等离子武器"
-    },
-    "nuclear-weapons": {
-      "id": "nuclear-weapons",
-      "name": "核武器",
-      "category": "military",
-      "cost": {
-        "science-nuclear": 300
-      },
-      "researchTime": 300,
-      "prerequisites": [
-        "nuclear-power"
-      ],
-      "unlocks": {
-        "recipes": [
-          "artillery-drone"
-        ]
-      },
-      "description": "解锁炮台无人机"
-    },
-    "fusion-technology": {
-      "id": "fusion-technology",
-      "name": "聚变科技",
-      "category": "nuclear",
-      "cost": {
-        "science-nuclear": 500
-      },
-      "researchTime": 500,
-      "prerequisites": [
-        "nuclear-power",
-        "advanced-electronics"
-      ],
-      "unlocks": {
-        "buildings": [
-          "fusion-reactor"
-        ],
-        "recipes": [
-          "fusion-cell",
-          "science-fusion"
-        ]
-      },
-      "description": "解锁聚变反应堆和聚变科研包"
-    },
-    "quantum-computing": {
-      "id": "quantum-computing",
-      "name": "量子计算",
-      "category": "electronics",
-      "cost": {
-        "science-nuclear": 400,
-        "science-fusion": 200
-      },
-      "researchTime": 400,
-      "prerequisites": [
-        "fusion-technology"
-      ],
-      "unlocks": {
-        "recipes": [
-          "quantum-circuit"
-        ]
-      },
-      "description": "解锁量子电路"
-    },
-    "nanofabrication": {
-      "id": "nanofabrication",
-      "name": "纳米制造",
-      "category": "production",
-      "cost": {
-        "science-fusion": 300
-      },
-      "researchTime": 300,
-      "prerequisites": [
-        "quantum-computing"
-      ],
-      "unlocks": {
-        "recipes": [
-          "nanomaterial"
-        ]
-      },
-      "description": "解锁纳米材料"
-    },
-    "antimatter-weapons": {
-      "id": "antimatter-weapons",
-      "name": "反物质武器",
-      "category": "military",
-      "cost": {
-        "science-fusion": 500
-      },
-      "researchTime": 500,
-      "prerequisites": [
-        "nanofabrication"
-      ],
-      "unlocks": {
-        "recipes": [
-          "antimatter-charge"
-        ]
-      },
-      "description": "解锁反物质充能，终极武器"
-    },
-    "ultimate-research": {
-      "id": "ultimate-research",
-      "name": "终极研究",
-      "category": "infrastructure",
-      "cost": {
-        "science-fusion": 1000
-      },
-      "researchTime": 1000,
-      "prerequisites": [
-        "fusion-technology"
-      ],
-      "unlocks": {
-        "buildings": [
-          "quantum-research-lab"
-        ]
-      },
-      "description": "解锁量子研究中心，5倍研究速度"
-    }
-  },
-  "units": {
-    "machinegun-drone": {
-      "id": "machinegun-drone",
-      "name": "机枪无人机",
-      "buildingType": "barracks",
-      "buildTime": 10,
-      "cost": {
-        "iron-plate": 5,
-        "circuit": 2
-      },
-      "combat": {
-        "hp": 100,
-        "damage": 20,
-        "ammoPerTurn": {
-          "normal-bullet": 1
-        },
-        "powerPerTurn": 5
-      },
-      "storageWeight": 10,
-      "requiresTech": null,
-      "description": "通用型无人机，使用普通子弹"
-    },
-    "heavy-machinegun-drone": {
-      "id": "heavy-machinegun-drone",
-      "name": "重机枪无人机",
-      "buildingType": "barracks",
-      "buildTime": 15,
-      "cost": {
-        "steel-plate": 10,
-        "circuit": 5
-      },
-      "combat": {
-        "hp": 150,
-        "damage": 40,
-        "damageType": "piercing",
-        "ammoPerTurn": {
-          "piercing-bullet": 1
-        },
-        "powerPerTurn": 10
-      },
-      "storageWeight": 15,
-      "bonusVs": {
-        "armored": 2
-      },
-      "requiresTech": "piercing-ammo",
-      "description": "对装甲虫 200% 效率"
-    },
-    "flamethrower-drone": {
-      "id": "flamethrower-drone",
-      "name": "喷火无人机",
-      "buildingType": "barracks",
-      "buildTime": 20,
-      "cost": {
-        "steel-plate": 15,
-        "circuit": 10
-      },
-      "combat": {
-        "hp": 120,
-        "damage": 30,
-        "aoe": 3,
-        "ammoPerTurn": {
-          "light-oil": 2
-        },
-        "powerPerTurn": 15
-      },
-      "storageWeight": 20,
-      "bonusVs": {
-        "swarm": 1.5
-      },
-      "requiresTech": "chemical-tech",
-      "description": "范围攻击，对群体 150% 效率"
-    },
-    "laser-drone": {
-      "id": "laser-drone",
-      "name": "激光无人机",
-      "buildingType": "heavy-military-factory",
-      "buildTime": 25,
-      "cost": {
-        "steel-plate": 30,
-        "advanced-circuit": 15,
-        "battery": 10
-      },
-      "combat": {
-        "hp": 130,
-        "damage": 50,
-        "powerPerTurn": 50
-      },
-      "storageWeight": 20,
-      "bonusVs": {
-        "shielded": 2
-      },
-      "requiresTech": "laser-weapons",
-      "description": "对护盾虫 200% 效率，无需弹药"
-    },
-    "plasma-drone": {
-      "id": "plasma-drone",
-      "name": "等离子无人机",
-      "buildingType": "heavy-military-factory",
-      "buildTime": 30,
-      "cost": {
-        "steel-plate": 40,
-        "advanced-circuit": 20,
-        "battery": 20
-      },
-      "combat": {
-        "hp": 140,
-        "damage": 70,
-        "piercing": true,
-        "powerPerTurn": 80
-      },
-      "storageWeight": 25,
-      "requiresTech": "advanced-military",
-      "description": "穿透攻击"
-    },
-    "artillery-drone": {
-      "id": "artillery-drone",
-      "name": "炮台无人机",
-      "buildingType": "heavy-military-factory",
-      "buildTime": 40,
-      "cost": {
-        "steel-plate": 50,
-        "advanced-circuit": 30,
-        "uranium-fuel-rod": 1
-      },
-      "combat": {
-        "hp": 200,
-        "damage": 200,
-        "ammoPerTurn": {
-          "uranium-235": 0.1
-        },
-        "powerPerTurn": 100
-      },
-      "storageWeight": 50,
-      "bonusVs": {
-        "boss": 1.5
-      },
-      "requiresTech": "nuclear-power",
-      "description": "对 BOSS 150% 效率"
+      "tier": 3,
+      "unlocks": [
+        "factory-drone-gun"
+      ]
     }
   },
   "enemies": {
-    "small-worker-bug": {
-      "id": "small-worker-bug",
-      "name": "小型工虫",
-      "type": "normal",
-      "hp": 200,
-      "attack": 25,
-      "armor": 0,
-      "description": "基础虫族单位"
+    "basic-bug": {
+      "id": "basic-bug",
+      "name": "小虫",
+      "hp": 50,
+      "attack": 10
     },
-    "medium-warrior-bug": {
-      "id": "medium-warrior-bug",
-      "name": "中型战虫",
-      "type": "normal",
-      "hp": 400,
-      "attack": 50,
-      "armor": 0,
-      "description": "常见战斗单位"
+    "medium-bug": {
+      "id": "medium-bug",
+      "name": "中虫",
+      "hp": 120,
+      "attack": 25
     },
-    "armored-beetle": {
-      "id": "armored-beetle",
-      "name": "装甲甲虫",
-      "type": "armored",
-      "hp": 800,
-      "attack": 37,
-      "armor": 50,
-      "resistance": {
-        "physical": 0.5
-      },
-      "weakness": "piercing",
-      "description": "装甲单位，物理伤害减半"
-    },
-    "fast-hunter-bug": {
-      "id": "fast-hunter-bug",
-      "name": "快速猎虫",
-      "type": "swarm",
-      "hp": 320,
-      "attack": 62,
-      "armor": 0,
-      "evasion": 0.3,
-      "weakness": "aoe",
-      "description": "闪避 30%，怕范围攻击"
-    },
-    "energy-shield-bug": {
-      "id": "energy-shield-bug",
-      "name": "能量护盾虫",
-      "type": "shielded",
-      "hp": 600,
-      "attack": 50,
-      "armor": 0,
-      "resistance": {
-        "physical": 0.5
-      },
-      "weakness": "laser",
-      "description": "能量护盾，物理武器效率-50%"
-    },
-    "heavy-tank-bug": {
-      "id": "heavy-tank-bug",
-      "name": "重型坦克虫",
-      "type": "armored",
-      "hp": 2000,
-      "attack": 100,
-      "armor": 70,
-      "resistance": {
-        "physical": 0.7
-      },
-      "description": "高护甲重型单位"
-    },
-    "spawner-bug": {
-      "id": "spawner-bug",
-      "name": "孵化母虫",
-      "type": "spawner",
-      "hp": 1200,
-      "attack": 25,
-      "armor": 0,
-      "spawnPerTurn": {
-        "small-worker-bug": 2
-      },
-      "priority": "high",
-      "description": "每回合召唤 2 只小型工虫"
-    },
-    "elite-bug-king": {
-      "id": "elite-bug-king",
-      "name": "精英虫王",
-      "type": "elite",
-      "hp": 3200,
-      "attack": 150,
-      "armor": 30,
-      "resistance": {
-        "all": 0.3
-      },
-      "description": "全属性抗性 30%"
-    },
-    "boss-armored-colossus": {
-      "id": "boss-armored-colossus",
-      "name": "装甲巨虫",
-      "type": "boss",
-      "hp": 12000,
-      "attack": 125,
-      "armor": 80,
-      "resistance": {
-        "physical": 0.8
-      },
-      "weakness": "piercing",
-      "description": "BOSS：护甲 80%，必须用穿甲弹"
-    },
-    "boss-energy-core-bug": {
-      "id": "boss-energy-core-bug",
-      "name": "能量核心虫",
-      "type": "boss",
-      "hp": 20000,
-      "attack": 175,
-      "armor": 0,
-      "resistance": {
-        "physical": 0.7
-      },
-      "weakness": "laser",
-      "description": "BOSS：能量护盾，物理伤害-70%"
-    },
-    "boss-hive-mother": {
-      "id": "boss-hive-mother",
-      "name": "虫巢母体",
-      "type": "boss",
-      "hp": 32000,
-      "attack": 200,
-      "armor": 30,
-      "spawnPerTurn": {
-        "small-worker-bug": 2,
-        "medium-warrior-bug": 1
-      },
-      "description": "BOSS：每回合召唤虫族，持久战"
-    },
-    "boss-swarm-lord-phase1": {
-      "id": "boss-swarm-lord-phase1",
-      "name": "虫族主宰（装甲形态）",
-      "type": "boss",
-      "hp": 40000,
-      "attack": 250,
-      "armor": 90,
-      "resistance": {
-        "physical": 0.9
-      },
-      "nextPhase": "boss-swarm-lord-phase2",
-      "description": "BOSS 阶段 1：护甲 90%"
-    },
-    "boss-swarm-lord-phase2": {
-      "id": "boss-swarm-lord-phase2",
-      "name": "虫族主宰（能量形态）",
-      "type": "boss",
-      "hp": 32000,
-      "attack": 300,
-      "armor": 0,
-      "resistance": {
-        "physical": 1,
-        "energy": 0
-      },
-      "immunity": [
-        "physical"
-      ],
-      "nextPhase": "boss-swarm-lord-phase3",
-      "description": "BOSS 阶段 2：免疫物理伤害"
-    },
-    "boss-swarm-lord-phase3": {
-      "id": "boss-swarm-lord-phase3",
-      "name": "虫族主宰（狂暴形态）",
-      "type": "boss",
-      "hp": 20000,
-      "attack": 500,
-      "armor": 0,
-      "spawnPerTurn": {
-        "small-worker-bug": 3,
-        "medium-warrior-bug": 2,
-        "armored-beetle": 1
-      },
-      "description": "BOSS 阶段 3：每回合召唤所有类型虫族，攻击 ×2"
-    },
-    "irradiated-worker": {
-      "id": "irradiated-worker",
-      "name": "辐射工虫",
-      "type": "normal",
-      "hp": 500,
-      "attack": 40,
-      "armor": 10,
-      "description": "受辐射变异的工虫"
-    },
-    "toxic-beetle": {
-      "id": "toxic-beetle",
-      "name": "剧毒甲虫",
-      "type": "armored",
-      "hp": 1200,
-      "attack": 65,
-      "armor": 60,
-      "resistance": {
-        "physical": 0.6
-      },
-      "weakness": "piercing",
-      "description": "高护甲剧毒单位"
-    },
-    "mutant-swarm": {
-      "id": "mutant-swarm",
-      "name": "变异虫群",
-      "type": "swarm",
-      "hp": 350,
-      "attack": 75,
-      "armor": 0,
-      "evasion": 0.4,
-      "weakness": "aoe",
-      "description": "快速变异虫，40%闪避"
-    },
-    "radiation-hunter": {
-      "id": "radiation-hunter",
-      "name": "辐射猎手",
-      "type": "shielded",
-      "hp": 1600,
-      "attack": 90,
-      "armor": 20,
-      "resistance": {
-        "physical": 0.5
-      },
-      "regeneration": 20,
-      "weakness": "laser",
-      "description": "能量护盾，每回合再生20HP"
-    },
-    "heavy-mutant-tank": {
-      "id": "heavy-mutant-tank",
-      "name": "重型变异坦克",
-      "type": "armored",
-      "hp": 3200,
-      "attack": 125,
-      "armor": 80,
-      "resistance": {
-        "physical": 0.8
-      },
-      "description": "超重装甲单位"
-    },
-    "mutant-queen": {
-      "id": "mutant-queen",
-      "name": "变异女王",
-      "type": "spawner",
-      "hp": 2400,
-      "attack": 75,
-      "armor": 30,
-      "spawnPerTurn": {
-        "irradiated-worker": 3
-      },
-      "priority": "high",
-      "description": "每回合召唤3只辐射工虫"
-    },
-    "boss-nest-mother": {
-      "id": "boss-nest-mother",
-      "name": "虫巢母体 BOSS",
-      "type": "boss",
-      "hp": 32000,
-      "attack": 200,
-      "armor": 50,
-      "resistance": {
-        "all": 0.4
-      },
-      "spawnPerTurn": {
-        "irradiated-worker": 4,
-        "toxic-beetle": 2,
-        "mutant-swarm": 3
-      },
-      "description": "BOSS：每回合召唤大量变异虫，40%全抗"
-    },
-    "crystal-guardian": {
-      "id": "crystal-guardian",
-      "name": "水晶守卫",
-      "type": "elite",
-      "hp": 4000,
-      "attack": 150,
-      "armor": 50,
-      "resistance": {
-        "all": 0.3
-      },
-      "reflectDamage": 0.3,
-      "description": "反射30%伤害，全抗30%"
-    },
-    "energy-being": {
-      "id": "energy-being",
-      "name": "能量体",
-      "type": "shielded",
-      "hp": 3200,
-      "attack": 175,
-      "armor": 0,
-      "evasion": 0.5,
-      "resistance": {
-        "physical": 0.7
-      },
-      "weakness": "laser",
-      "description": "相位转换，50%闪避"
-    },
-    "quantum-bug": {
-      "id": "quantum-bug",
-      "name": "量子虫",
-      "type": "elite",
-      "hp": 4800,
-      "attack": 200,
-      "armor": 60,
-      "resistance": {
-        "all": 0.6
-      },
-      "description": "量子护盾，所有伤害-60%"
-    },
-    "phase-shifter": {
-      "id": "phase-shifter",
-      "name": "相位转换者",
-      "type": "elite",
-      "hp": 6000,
-      "attack": 225,
-      "armor": 40,
-      "evasion": 0.3,
-      "regeneration": 50,
-      "description": "传送能力，再生50HP/回合"
-    },
-    "fusion-elite": {
-      "id": "fusion-elite",
-      "name": "聚变精英",
-      "type": "elite",
-      "hp": 8000,
-      "attack": 250,
-      "armor": 70,
-      "resistance": {
-        "all": 0.5
-      },
-      "description": "全属性抗性50%"
-    },
-    "boss-quantum-overlord-p1": {
-      "id": "boss-quantum-overlord-p1",
-      "name": "量子霸主（第一形态）",
-      "type": "boss",
-      "hp": 50000,
-      "attack": 300,
-      "armor": 90,
-      "resistance": {
-        "physical": 0.9
-      },
-      "nextPhase": "boss-quantum-overlord-p2",
-      "description": "BOSS阶段1：90%物理抗性"
-    },
-    "boss-quantum-overlord-p2": {
-      "id": "boss-quantum-overlord-p2",
-      "name": "量子霸主（第二形态）",
-      "type": "boss",
-      "hp": 40000,
-      "attack": 350,
-      "armor": 0,
-      "resistance": {
-        "physical": 1,
-        "energy": 0
-      },
-      "immunity": [
-        "physical"
-      ],
-      "nextPhase": "boss-quantum-overlord-p3",
-      "description": "BOSS阶段2：免疫物理伤害"
-    },
-    "boss-quantum-overlord-p3": {
-      "id": "boss-quantum-overlord-p3",
-      "name": "量子霸主（第三形态）",
-      "type": "boss",
-      "hp": 30000,
-      "attack": 500,
-      "armor": 50,
-      "spawnPerTurn": {
-        "fusion-elite": 2,
-        "quantum-bug": 3,
-        "crystal-guardian": 2
-      },
-      "description": "BOSS阶段3：每回合召唤精英单位，攻击爆炸"
-    },
-    "boss-ultimate-swarm-lord-p1": {
-      "id": "boss-ultimate-swarm-lord-p1",
-      "name": "终极虫群领主（装甲形态）",
-      "type": "boss",
-      "hp": 60000,
-      "attack": 400,
-      "armor": 95,
-      "resistance": {
-        "physical": 0.95
-      },
-      "nextPhase": "boss-ultimate-swarm-lord-p2",
-      "description": "最终BOSS阶段1：95%物理抗性"
-    },
-    "boss-ultimate-swarm-lord-p2": {
-      "id": "boss-ultimate-swarm-lord-p2",
-      "name": "终极虫群领主（能量形态）",
-      "type": "boss",
-      "hp": 50000,
-      "attack": 450,
-      "armor": 0,
-      "resistance": {
-        "physical": 1,
-        "energy": 0.3
-      },
-      "immunity": [
-        "physical"
-      ],
-      "nextPhase": "boss-ultimate-swarm-lord-p3",
-      "description": "最终BOSS阶段2：免疫物理，30%能量抗性"
-    },
-    "boss-ultimate-swarm-lord-p3": {
-      "id": "boss-ultimate-swarm-lord-p3",
-      "name": "终极虫群领主（毁灭形态）",
-      "type": "boss",
-      "hp": 40000,
-      "attack": 600,
-      "armor": 30,
-      "resistance": {
-        "all": 0.4
-      },
-      "spawnPerTurn": {
-        "fusion-elite": 3,
-        "quantum-bug": 4,
-        "phase-shifter": 2,
-        "heavy-mutant-tank": 3
-      },
-      "description": "最终BOSS阶段3：每回合大量召唤，超高攻击"
+    "big-bug": {
+      "id": "big-bug",
+      "name": "大虫",
+      "hp": 300,
+      "attack": 50
     }
-  },
-  "regions": [
-    {
-      "id": 1,
-      "name": "区域 1",
-      "phase": 1,
-      "slotsTotal": 16,
-      "resourceNodes": [
-        {
-          "type": "iron-ore",
-          "amount": 10000,
-          "rate": 5
-        },
-        {
-          "type": "copper-ore",
-          "amount": 10000,
-          "rate": 5
-        },
-        {
-          "type": "stone",
-          "amount": 5000,
-          "rate": 5
-        }
-      ],
-      "enemies": [],
-      "conquered": true,
-      "description": "起始区域，无煤炭资源"
-    },
-    {
-      "id": 2,
-      "name": "区域 2",
-      "phase": 1,
-      "slotsTotal": 16,
-      "resourceNodes": [
-        {
-          "type": "iron-ore",
-          "amount": 1000,
-          "rate": 5
-        },
-        {
-          "type": "coal",
-          "amount": 8000,
-          "rate": 5
-        }
-      ],
-      "enemies": [
-        {
-          "type": "small-worker-bug",
-          "count": 35
-        }
-      ],
-      "conquered": false,
-      "description": "首个煤炭资源区域"
-    },
-    {
-      "id": 3,
-      "name": "区域 3",
-      "phase": 1,
-      "slotsTotal": 16,
-      "resourceNodes": [
-        {
-          "type": "iron-ore",
-          "amount": 1200,
-          "rate": 5
-        },
-        {
-          "type": "copper-ore",
-          "amount": 800,
-          "rate": 5
-        },
-        {
-          "type": "stone",
-          "amount": 1500,
-          "rate": 5
-        }
-      ],
-      "enemies": [
-        {
-          "type": "small-worker-bug",
-          "count": 28
-        },
-        {
-          "type": "medium-warrior-bug",
-          "count": 17
-        }
-      ],
-      "conquered": false,
-      "description": "混合敌军，需要基础装备"
-    },
-    {
-      "id": 4,
-      "name": "区域 4 - BOSS",
-      "phase": 1,
-      "slotsTotal": 16,
-      "resourceNodes": [
-        {
-          "type": "iron-ore",
-          "amount": 2000,
-          "rate": 5
-        },
-        {
-          "type": "copper-ore",
-          "amount": 2000,
-          "rate": 5
-        },
-        {
-          "type": "coal",
-          "amount": 1500,
-          "rate": 5
-        },
-        {
-          "type": "crude-oil",
-          "amount": 1000,
-          "rate": 5
-        }
-      ],
-      "enemies": [
-        {
-          "type": "boss-armored-colossus",
-          "count": 1
-        }
-      ],
-      "isBoss": true,
-      "conquered": false,
-      "rewards": {
-        "unlockResources": [
-          "crude-oil"
-        ],
-        "bonusSlots": 2
-      },
-      "description": "BOSS：装甲巨虫，解锁原油"
-    },
-    {
-      "id": 5,
-      "name": "区域 5",
-      "phase": 1,
-      "slotsTotal": 16,
-      "resourceNodes": [
-        {
-          "type": "iron-ore",
-          "amount": 1500,
-          "rate": 5
-        },
-        {
-          "type": "copper-ore",
-          "amount": 1500,
-          "rate": 5
-        },
-        {
-          "type": "coal",
-          "amount": 1200,
-          "rate": 5
-        }
-      ],
-      "enemies": [
-        {
-          "type": "medium-warrior-bug",
-          "count": 35
-        },
-        {
-          "type": "armored-beetle",
-          "count": 10
-        }
-      ],
-      "conquered": false,
-      "description": "出现装甲单位，建议使用穿甲弹"
-    },
-    {
-      "id": 6,
-      "name": "区域 6",
-      "phase": 2,
-      "slotsTotal": 16,
-      "resourceNodes": [
-        {
-          "type": "iron-ore",
-          "amount": 1500,
-          "rate": 5
-        },
-        {
-          "type": "copper-ore",
-          "amount": 1500,
-          "rate": 5
-        },
-        {
-          "type": "crude-oil",
-          "amount": 1500,
-          "rate": 5
-        }
-      ],
-      "enemies": [
-        {
-          "type": "medium-warrior-bug",
-          "count": 42
-        },
-        {
-          "type": "fast-hunter-bug",
-          "count": 17
-        }
-      ],
-      "conquered": false,
-      "description": "快速单位，建议范围武器"
-    },
-    {
-      "id": 7,
-      "name": "区域 7",
-      "phase": 2,
-      "slotsTotal": 16,
-      "resourceNodes": [
-        {
-          "type": "copper-ore",
-          "amount": 2000,
-          "rate": 5
-        },
-        {
-          "type": "crude-oil",
-          "amount": 2000,
-          "rate": 5
-        }
-      ],
-      "enemies": [
-        {
-          "type": "energy-shield-bug",
-          "count": 28
-        },
-        {
-          "type": "armored-beetle",
-          "count": 17
-        }
-      ],
-      "conquered": false,
-      "description": "护盾单位，激光武器效果显著"
-    },
-    {
-      "id": 8,
-      "name": "区域 8 - BOSS",
-      "phase": 2,
-      "slotsTotal": 16,
-      "resourceNodes": [
-        {
-          "type": "iron-ore",
-          "amount": 3000,
-          "rate": 5
-        },
-        {
-          "type": "copper-ore",
-          "amount": 3000,
-          "rate": 5
-        },
-        {
-          "type": "crude-oil",
-          "amount": 3000,
-          "rate": 5
-        },
-        {
-          "type": "uranium-ore",
-          "amount": 500,
-          "rate": 2
-        }
-      ],
-      "enemies": [
-        {
-          "type": "boss-energy-core-bug",
-          "count": 1
-        }
-      ],
-      "isBoss": true,
-      "conquered": false,
-      "rewards": {
-        "unlockResources": [
-          "uranium-ore"
-        ],
-        "bonusSlots": 2
-      },
-      "description": "BOSS：能量核心虫，解锁铀矿"
-    },
-    {
-      "id": 9,
-      "name": "区域 9",
-      "phase": 2,
-      "slotsTotal": 16,
-      "resourceNodes": [
-        {
-          "type": "iron-ore",
-          "amount": 3000,
-          "rate": 5
-        },
-        {
-          "type": "crude-oil",
-          "amount": 3000,
-          "rate": 5
-        }
-      ],
-      "enemies": [
-        {
-          "type": "spawner-bug",
-          "count": 7
-        },
-        {
-          "type": "armored-beetle",
-          "count": 28
-        },
-        {
-          "type": "energy-shield-bug",
-          "count": 17
-        }
-      ],
-      "conquered": false,
-      "description": "孵化母虫，优先击杀"
-    },
-    {
-      "id": 10,
-      "name": "区域 10",
-      "phase": 2,
-      "slotsTotal": 16,
-      "resourceNodes": [
-        {
-          "type": "iron-ore",
-          "amount": 2500,
-          "rate": 5
-        },
-        {
-          "type": "copper-ore",
-          "amount": 2500,
-          "rate": 5
-        },
-        {
-          "type": "coal",
-          "amount": 2000,
-          "rate": 5
-        }
-      ],
-      "enemies": [
-        {
-          "type": "heavy-tank-bug",
-          "count": 10
-        },
-        {
-          "type": "medium-warrior-bug",
-          "count": 35
-        }
-      ],
-      "conquered": false,
-      "description": "重型坦克虫，需要高级武器"
-    },
-    {
-      "id": 11,
-      "name": "区域 11 - 核废土",
-      "phase": 3,
-      "slotsTotal": 16,
-      "resourceNodes": [
-        {
-          "type": "iron-ore",
-          "amount": 15000,
-          "rate": 5
-        },
-        {
-          "type": "copper-ore",
-          "amount": 15000,
-          "rate": 5
-        },
-        {
-          "type": "coal",
-          "amount": 12000,
-          "rate": 5
-        },
-        {
-          "type": "uranium-ore",
-          "amount": 8000,
-          "rate": 2
-        }
-      ],
-      "enemies": [
-        {
-          "type": "irradiated-worker",
-          "count": 40
-        },
-        {
-          "type": "toxic-beetle",
-          "count": 20
-        },
-        {
-          "type": "armored-beetle",
-          "count": 15
-        }
-      ],
-      "conquered": false,
-      "description": "核废土区域，首次出现铀矿"
-    },
-    {
-      "id": 12,
-      "name": "区域 12 - BOSS: 虫巢母体",
-      "phase": 3,
-      "slotsTotal": 16,
-      "resourceNodes": [
-        {
-          "type": "iron-ore",
-          "amount": 20000,
-          "rate": 5
-        },
-        {
-          "type": "copper-ore",
-          "amount": 20000,
-          "rate": 5
-        },
-        {
-          "type": "uranium-ore",
-          "amount": 15000,
-          "rate": 2
-        },
-        {
-          "type": "crude-oil",
-          "amount": 15000,
-          "rate": 5
-        }
-      ],
-      "enemies": [
-        {
-          "type": "boss-nest-mother",
-          "count": 1
-        }
-      ],
-      "conquered": false,
-      "description": "BOSS战：虫巢母体，需要强大的军队和充足弹药"
-    },
-    {
-      "id": 13,
-      "name": "区域 13 - 辐射谷",
-      "phase": 3,
-      "slotsTotal": 16,
-      "resourceNodes": [
-        {
-          "type": "iron-ore",
-          "amount": 18000,
-          "rate": 5
-        },
-        {
-          "type": "copper-ore",
-          "amount": 18000,
-          "rate": 5
-        },
-        {
-          "type": "uranium-ore",
-          "amount": 20000,
-          "rate": 2
-        },
-        {
-          "type": "coal",
-          "amount": 15000,
-          "rate": 5
-        }
-      ],
-      "enemies": [
-        {
-          "type": "radiation-hunter",
-          "count": 25
-        },
-        {
-          "type": "heavy-mutant-tank",
-          "count": 15
-        },
-        {
-          "type": "mutant-queen",
-          "count": 5
-        }
-      ],
-      "conquered": false,
-      "description": "重型变异单位集中区"
-    },
-    {
-      "id": 14,
-      "name": "区域 14 - 污染废墟",
-      "phase": 3,
-      "slotsTotal": 16,
-      "resourceNodes": [
-        {
-          "type": "iron-ore",
-          "amount": 20000,
-          "rate": 5
-        },
-        {
-          "type": "copper-ore",
-          "amount": 20000,
-          "rate": 5
-        },
-        {
-          "type": "uranium-ore",
-          "amount": 25000,
-          "rate": 2
-        },
-        {
-          "type": "crude-oil",
-          "amount": 20000,
-          "rate": 5
-        }
-      ],
-      "enemies": [
-        {
-          "type": "toxic-beetle",
-          "count": 30
-        },
-        {
-          "type": "heavy-mutant-tank",
-          "count": 20
-        },
-        {
-          "type": "mutant-swarm",
-          "count": 35
-        },
-        {
-          "type": "mutant-queen",
-          "count": 8
-        }
-      ],
-      "conquered": false,
-      "description": "高密度敌军区域"
-    },
-    {
-      "id": 15,
-      "name": "区域 15 - 水晶洞穴",
-      "phase": 4,
-      "slotsTotal": 16,
-      "resourceNodes": [
-        {
-          "type": "iron-ore",
-          "amount": 25000,
-          "rate": 5
-        },
-        {
-          "type": "copper-ore",
-          "amount": 25000,
-          "rate": 5
-        },
-        {
-          "type": "uranium-ore",
-          "amount": 30000,
-          "rate": 2
-        },
-        {
-          "type": "crude-oil",
-          "amount": 25000,
-          "rate": 5
-        }
-      ],
-      "enemies": [
-        {
-          "type": "crystal-guardian",
-          "count": 30
-        },
-        {
-          "type": "energy-being",
-          "count": 25
-        },
-        {
-          "type": "quantum-bug",
-          "count": 20
-        }
-      ],
-      "conquered": false,
-      "description": "Phase 4开始：高级能量生物"
-    },
-    {
-      "id": 16,
-      "name": "区域 16 - BOSS: 量子霸主",
-      "phase": 4,
-      "slotsTotal": 16,
-      "resourceNodes": [
-        {
-          "type": "iron-ore",
-          "amount": 30000,
-          "rate": 5
-        },
-        {
-          "type": "copper-ore",
-          "amount": 30000,
-          "rate": 5
-        },
-        {
-          "type": "uranium-ore",
-          "amount": 35000,
-          "rate": 2
-        },
-        {
-          "type": "crude-oil",
-          "amount": 30000,
-          "rate": 5
-        }
-      ],
-      "enemies": [
-        {
-          "type": "boss-quantum-overlord-p1",
-          "count": 1
-        }
-      ],
-      "conquered": false,
-      "description": "BOSS战：量子霸主三阶段，需要最高级装备"
-    },
-    {
-      "id": 17,
-      "name": "区域 17 - 相位空间",
-      "phase": 4,
-      "slotsTotal": 16,
-      "resourceNodes": [
-        {
-          "type": "iron-ore",
-          "amount": 35000,
-          "rate": 5
-        },
-        {
-          "type": "copper-ore",
-          "amount": 35000,
-          "rate": 5
-        },
-        {
-          "type": "uranium-ore",
-          "amount": 40000,
-          "rate": 2
-        },
-        {
-          "type": "crude-oil",
-          "amount": 35000,
-          "rate": 5
-        },
-        {
-          "type": "coal",
-          "amount": 30000,
-          "rate": 5
-        }
-      ],
-      "enemies": [
-        {
-          "type": "phase-shifter",
-          "count": 25
-        },
-        {
-          "type": "quantum-bug",
-          "count": 30
-        },
-        {
-          "type": "fusion-elite",
-          "count": 20
-        }
-      ],
-      "conquered": false,
-      "description": "精英单位混合区"
-    },
-    {
-      "id": 18,
-      "name": "区域 18 - 聚变核心",
-      "phase": 4,
-      "slotsTotal": 16,
-      "resourceNodes": [
-        {
-          "type": "iron-ore",
-          "amount": 40000,
-          "rate": 5
-        },
-        {
-          "type": "copper-ore",
-          "amount": 40000,
-          "rate": 5
-        },
-        {
-          "type": "uranium-ore",
-          "amount": 45000,
-          "rate": 2
-        },
-        {
-          "type": "crude-oil",
-          "amount": 40000,
-          "rate": 5
-        }
-      ],
-      "enemies": [
-        {
-          "type": "fusion-elite",
-          "count": 35
-        },
-        {
-          "type": "crystal-guardian",
-          "count": 30
-        },
-        {
-          "type": "energy-being",
-          "count": 35
-        },
-        {
-          "type": "phase-shifter",
-          "count": 20
-        }
-      ],
-      "conquered": false,
-      "description": "大量精英单位"
-    },
-    {
-      "id": 19,
-      "name": "区域 19 - 终极前线",
-      "phase": 4,
-      "slotsTotal": 16,
-      "resourceNodes": [
-        {
-          "type": "iron-ore",
-          "amount": 50000,
-          "rate": 5
-        },
-        {
-          "type": "copper-ore",
-          "amount": 50000,
-          "rate": 5
-        },
-        {
-          "type": "uranium-ore",
-          "amount": 50000,
-          "rate": 2
-        },
-        {
-          "type": "crude-oil",
-          "amount": 50000,
-          "rate": 5
-        },
-        {
-          "type": "coal",
-          "amount": 40000,
-          "rate": 5
-        },
-        {
-          "type": "stone",
-          "amount": 30000,
-          "rate": 5
-        }
-      ],
-      "enemies": [
-        {
-          "type": "fusion-elite",
-          "count": 40
-        },
-        {
-          "type": "quantum-bug",
-          "count": 40
-        },
-        {
-          "type": "phase-shifter",
-          "count": 30
-        },
-        {
-          "type": "crystal-guardian",
-          "count": 35
-        },
-        {
-          "type": "energy-being",
-          "count": 40
-        },
-        {
-          "type": "heavy-mutant-tank",
-          "count": 25
-        }
-      ],
-      "conquered": false,
-      "description": "最终准备区域，所有资源充足"
-    },
-    {
-      "id": 20,
-      "name": "区域 20 - BOSS: 终极虫群领主",
-      "phase": 4,
-      "slotsTotal": 16,
-      "resourceNodes": [
-        {
-          "type": "iron-ore",
-          "amount": 99999,
-          "rate": 5
-        },
-        {
-          "type": "copper-ore",
-          "amount": 99999,
-          "rate": 5
-        },
-        {
-          "type": "uranium-ore",
-          "amount": 99999,
-          "rate": 2
-        },
-        {
-          "type": "crude-oil",
-          "amount": 99999,
-          "rate": 5
-        },
-        {
-          "type": "coal",
-          "amount": 99999,
-          "rate": 5
-        },
-        {
-          "type": "stone",
-          "amount": 99999,
-          "rate": 5
-        }
-      ],
-      "enemies": [
-        {
-          "type": "boss-ultimate-swarm-lord-p1",
-          "count": 1
-        }
-      ],
-      "conquered": false,
-      "description": "最终BOSS：终极虫群领主，三阶段史诗战斗！胜利即通关！"
-    }
-  ]
+  }
 }
