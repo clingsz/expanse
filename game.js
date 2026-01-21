@@ -26,7 +26,9 @@ let gameState = {
         inBattle: false,
         playerUnits: [],  // [{ type, count, hp, maxHp, attack }, ...]
         enemyUnits: [],   // [{ type, count, hp, maxHp, attack }, ...]
-        log: []
+        log: [],
+        turretsOperational: 0,  // 可用机枪塔数量
+        turretsDamaged: 0       // 损坏的机枪塔数量
     },
     threat: {
         level: 0,
@@ -118,7 +120,12 @@ function initializeGameState() {
 
     if (gameState.resources['space']) {
         gameState.resources['space'].current = 0;
-        gameState.resources['space'].max = 10;
+        // max comes from data.json baseStorage (100)
+    }
+
+    // Initialize drone with damaged tracking
+    if (gameState.resources['drone']) {
+        gameState.resources['drone'].damaged = 0;
     }
 
     if (gameState.resources['stone']) gameState.resources['stone'].current = 50;
@@ -298,6 +305,11 @@ function buildBuilding(id) {
         gameState.threat.level += building.threatIncrease || 1;
     }
 
+    // Sync turret count with combat state
+    if (id === 'turret-basic') {
+        gameState.combat.turretsOperational++;
+    }
+
     showToast(`已建造 ${building.name}！`, 'success');
     renderCurrentTab();
     updateInfoPanel();
@@ -319,6 +331,15 @@ function removeBuilding(id) {
     if (building.special === 'expander') {
         gameState.resources['space'].max -= building.expandAmount || 5;
         gameState.threat.level = Math.max(0, gameState.threat.level - (building.threatIncrease || 1));
+    }
+
+    // Sync turret count with combat state (prioritize removing operational ones)
+    if (id === 'turret-basic') {
+        if (gameState.combat.turretsOperational > 0) {
+            gameState.combat.turretsOperational--;
+        } else if (gameState.combat.turretsDamaged > 0) {
+            gameState.combat.turretsDamaged--;
+        }
     }
 
     for (const [resourceId, amount] of Object.entries(building.buildCost || {})) {
@@ -445,12 +466,17 @@ function processCombat(dt) {
 }
 
 function getPlayerAttackPower() {
-    let power = 0;
-    for (const unit of gameState.combat.playerUnits) {
-        if (unit.hp > 0) {
-            power += unit.attack * unit.count;
-        }
+    let power = 20;  // 基地基础攻击力 20/秒
+
+    // 可用机枪塔攻击力: 5/秒 each
+    power += gameState.combat.turretsOperational * 5;
+
+    // 可用无人机攻击力: 10/秒 each
+    const drones = gameState.resources['drone'];
+    if (drones) {
+        power += drones.current * 10;
     }
+
     return power;
 }
 
@@ -467,19 +493,44 @@ function getEnemyAttackPower() {
 function applyDamageToPlayer(damage) {
     let remainingDamage = damage;
 
-    for (const unit of gameState.combat.playerUnits) {
-        if (remainingDamage <= 0) break;
-        if (unit.hp <= 0) continue;
+    // 1. 先打无人机 (每个50HP)
+    const drones = gameState.resources['drone'];
+    if (drones && drones.current > 0 && remainingDamage > 0) {
+        const droneHp = 50;
+        const totalDroneHp = drones.current * droneHp;
+        const droneDamage = Math.min(remainingDamage, totalDroneHp);
+        const dronesKilled = Math.ceil(droneDamage / droneHp);
 
-        const absorbed = Math.min(unit.hp, remainingDamage);
-        unit.hp -= absorbed;
-        remainingDamage -= absorbed;
-
-        if (unit.hp <= 0) {
-            gameState.combat.log.push(`失去了 ${unit.name}！`);
+        if (dronesKilled > 0) {
+            const actualKilled = Math.min(dronesKilled, drones.current);
+            drones.current -= actualKilled;
+            drones.damaged = (drones.damaged || 0) + actualKilled;
+            remainingDamage -= actualKilled * droneHp;
+            if (actualKilled > 0) {
+                gameState.combat.log.push(`${actualKilled}架无人机损坏！`);
+            }
         }
     }
 
+    // 2. 再打机枪塔 (每个100HP)
+    if (remainingDamage > 0 && gameState.combat.turretsOperational > 0) {
+        const turretHp = 100;
+        const totalTurretHp = gameState.combat.turretsOperational * turretHp;
+        const turretDamage = Math.min(remainingDamage, totalTurretHp);
+        const turretsKilled = Math.ceil(turretDamage / turretHp);
+
+        if (turretsKilled > 0) {
+            const actualKilled = Math.min(turretsKilled, gameState.combat.turretsOperational);
+            gameState.combat.turretsOperational -= actualKilled;
+            gameState.combat.turretsDamaged += actualKilled;
+            remainingDamage -= actualKilled * turretHp;
+            if (actualKilled > 0) {
+                gameState.combat.log.push(`${actualKilled}座机枪塔损坏！`);
+            }
+        }
+    }
+
+    // 3. 最后打基地
     if (remainingDamage > 0) {
         gameState.base.hp -= remainingDamage;
     }
@@ -496,6 +547,115 @@ function gameOver() {
 
 function restartGame() {
     location.reload();
+}
+
+// ===== Combat HP Calculation Helpers =====
+
+function getPlayerTotalHP() {
+    let hp = gameState.base.hp;
+
+    // 可用机枪塔HP
+    hp += gameState.combat.turretsOperational * 100;
+
+    // 可用无人机HP
+    const drones = gameState.resources['drone'];
+    if (drones) {
+        hp += drones.current * 50;
+    }
+
+    return hp;
+}
+
+function getPlayerMaxHP() {
+    let maxHp = gameState.base.maxHp;
+
+    // 总机枪塔HP (包括损坏的)
+    const totalTurrets = gameState.combat.turretsOperational + gameState.combat.turretsDamaged;
+    maxHp += totalTurrets * 100;
+
+    // 总无人机HP (包括损坏的)
+    const drones = gameState.resources['drone'];
+    if (drones) {
+        const totalDrones = drones.current + (drones.damaged || 0);
+        maxHp += totalDrones * 50;
+    }
+
+    return maxHp;
+}
+
+function getEnemyTotalHP() {
+    let hp = 0;
+    for (const unit of gameState.combat.enemyUnits) {
+        hp += Math.max(0, unit.hp);
+    }
+    return hp;
+}
+
+function getEnemyMaxHP() {
+    let maxHp = 0;
+    for (const unit of gameState.combat.enemyUnits) {
+        maxHp += unit.maxHp;
+    }
+    return maxHp;
+}
+
+// ===== Repair Functions =====
+
+function repairTurret() {
+    const cost = 3;  // 修复包消耗
+    const packs = gameState.resources['repair-pack'];
+
+    if (!packs || packs.current < cost) {
+        showToast('修复包不足 (需要3个)', 'error');
+        return false;
+    }
+
+    if (gameState.combat.turretsDamaged <= 0) {
+        showToast('没有损坏的机枪塔', 'info');
+        return false;
+    }
+
+    if (gameState.combat.inBattle) {
+        showToast('战斗中无法修复', 'error');
+        return false;
+    }
+
+    packs.current -= cost;
+    gameState.combat.turretsDamaged--;
+    gameState.combat.turretsOperational++;
+    showToast('修复了1座机枪塔！', 'success');
+    renderCurrentTab();
+    updateInfoPanel();
+    return true;
+}
+
+function repairDrone() {
+    const cost = 1;  // 修复包消耗
+    const packs = gameState.resources['repair-pack'];
+    const drones = gameState.resources['drone'];
+
+    if (!packs || packs.current < cost) {
+        showToast('修复包不足 (需要1个)', 'error');
+        return false;
+    }
+
+    if (!drones || (drones.damaged || 0) <= 0) {
+        showToast('没有损坏的无人机', 'info');
+        return false;
+    }
+
+    if (gameState.combat.inBattle) {
+        showToast('战斗中无法修复', 'error');
+        return false;
+    }
+
+    packs.current -= cost;
+    drones.damaged--;
+    drones.current++;
+    showToast('修复了1架无人机！', 'success');
+    renderCurrentTab();
+    updateInfoPanel();
+    return true;
 }
 
 // ============================================================
@@ -982,25 +1142,81 @@ function renderBattleTab() {
     const container = document.getElementById('tab-content');
     if (!container) return;
 
-    let html = '<div class="battle-layout">';
+    let html = '';
+
+    // Battle status bar (only during combat)
+    if (gameState.combat.inBattle) {
+        const playerHP = getPlayerTotalHP();
+        const enemyHP = getEnemyTotalHP();
+        const totalHP = playerHP + enemyHP;
+        const playerPercent = totalHP > 0 ? (playerHP / totalHP) * 100 : 50;
+
+        html += `
+            <div class="battle-status-bar">
+                <div class="status-bar-inner">
+                    <div class="player-bar" style="width: ${playerPercent}%"></div>
+                    <div class="enemy-bar" style="width: ${100 - playerPercent}%"></div>
+                </div>
+                <div class="status-bar-labels">
+                    <span class="player-hp">我方: ${Math.floor(playerHP)}/${Math.floor(getPlayerMaxHP())}</span>
+                    <span class="enemy-hp">敌方: ${Math.floor(enemyHP)}/${Math.floor(getEnemyMaxHP())}</span>
+                </div>
+            </div>`;
+    }
+
+    html += '<div class="battle-layout">';
 
     // Player units section
     html += `<div class="battle-section">
         <div class="battle-section-title friendly">我方单位</div>
         <div class="boxes-container">`;
 
-    if (gameState.combat.playerUnits.length === 0) {
-        html += '<div style="color: var(--text-muted); font-size: 0.85rem; padding: 8px;">暂无战斗单位</div>';
-    } else {
-        gameState.combat.playerUnits.forEach((unit, i) => {
-            const isSelected = selectedUnit?.type === 'player' && selectedUnit?.index === i;
-            html += `
-                <div class="game-box unit-box friendly ${isSelected ? 'selected' : ''}"
-                     onclick="selectUnit('player', ${i})">
-                    <div class="box-name">${unit.name}</div>
-                    <div class="box-value">x${unit.count}</div>
-                </div>`;
-        });
+    // 基地 (always shown)
+    const baseSelected = selectedUnit?.type === 'player' && selectedUnit?.id === 'base';
+    const baseHpPercent = (gameState.base.hp / gameState.base.maxHp) * 100;
+    html += `
+        <div class="game-box unit-box friendly ${baseSelected ? 'selected' : ''}"
+             onclick="selectUnit('player', 0, 'base')">
+            <div class="box-name">基地</div>
+            <div class="box-value">20/s</div>
+            <div class="unit-hp-bar">
+                <div class="unit-hp-fill" style="width: ${baseHpPercent}%"></div>
+            </div>
+        </div>`;
+
+    // 机枪塔 (only if any built)
+    const totalTurrets = gameState.combat.turretsOperational + gameState.combat.turretsDamaged;
+    if (totalTurrets > 0) {
+        const turretSelected = selectedUnit?.type === 'player' && selectedUnit?.id === 'turret';
+        const turretHpPercent = totalTurrets > 0 ? (gameState.combat.turretsOperational / totalTurrets) * 100 : 0;
+        const hasDamaged = gameState.combat.turretsDamaged > 0;
+        html += `
+            <div class="game-box unit-box friendly ${turretSelected ? 'selected' : ''} ${hasDamaged ? 'unit-damaged' : ''}"
+                 onclick="selectUnit('player', 1, 'turret')">
+                <div class="box-name">机枪塔</div>
+                <div class="box-value">${gameState.combat.turretsOperational}/${totalTurrets}</div>
+                <div class="unit-hp-bar">
+                    <div class="unit-hp-fill" style="width: ${turretHpPercent}%"></div>
+                </div>
+            </div>`;
+    }
+
+    // 无人机 (only if any exist or capacity > 0)
+    const drones = gameState.resources['drone'];
+    if (drones && (drones.current > 0 || (drones.damaged || 0) > 0 || drones.max > 0)) {
+        const droneSelected = selectedUnit?.type === 'player' && selectedUnit?.id === 'drone';
+        const totalDrones = drones.current + (drones.damaged || 0);
+        const droneHpPercent = totalDrones > 0 ? (drones.current / totalDrones) * 100 : 0;
+        const hasDamaged = (drones.damaged || 0) > 0;
+        html += `
+            <div class="game-box unit-box friendly ${droneSelected ? 'selected' : ''} ${hasDamaged ? 'unit-damaged' : ''}"
+                 onclick="selectUnit('player', 2, 'drone')">
+                <div class="box-name">无人机</div>
+                <div class="box-value">${drones.current}/${drones.max}</div>
+                <div class="unit-hp-bar">
+                    <div class="unit-hp-fill" style="width: ${droneHpPercent}%"></div>
+                </div>
+            </div>`;
     }
 
     html += '</div></div>';
@@ -1015,11 +1231,15 @@ function renderBattleTab() {
     } else {
         gameState.combat.enemyUnits.forEach((unit, i) => {
             const isSelected = selectedUnit?.type === 'enemy' && selectedUnit?.index === i;
+            const hpPercent = unit.maxHp > 0 ? (Math.max(0, unit.hp) / unit.maxHp) * 100 : 0;
             html += `
                 <div class="game-box unit-box enemy ${isSelected ? 'selected' : ''}"
                      onclick="selectUnit('enemy', ${i})">
                     <div class="box-name">${unit.name}</div>
                     <div class="box-value">x${unit.count}</div>
+                    <div class="unit-hp-bar enemy-hp-bar">
+                        <div class="unit-hp-fill enemy-hp-fill" style="width: ${hpPercent}%"></div>
+                    </div>
                 </div>`;
         });
     }
@@ -1044,24 +1264,99 @@ function renderBattleInfoPanel() {
     const baseHp = Math.floor(gameState.base.hp);
     const baseMaxHp = gameState.base.maxHp;
     const basePercent = (baseHp / baseMaxHp) * 100;
+    const repairPacks = gameState.resources['repair-pack']?.current || 0;
 
     let unitInfo = '';
     if (selectedUnit) {
-        const units = selectedUnit.type === 'player' ? gameState.combat.playerUnits : gameState.combat.enemyUnits;
-        const unit = units[selectedUnit.index];
-        if (unit) {
-            const hpPercent = (unit.hp / unit.maxHp) * 100;
-            unitInfo = `
-                <div class="info-section">
-                    <div class="info-section-title">选中单位</div>
-                    <div style="font-size: 1rem; color: var(--primary-color); margin-bottom: 8px;">${unit.name}</div>
-                    <div style="font-size: 0.85rem; margin-bottom: 4px;">数量: ${unit.count}</div>
-                    <div style="font-size: 0.85rem; margin-bottom: 4px;">攻击力: ${unit.attack}</div>
-                    <div style="font-size: 0.85rem; margin-bottom: 4px;">生命值: ${Math.floor(unit.hp)}/${unit.maxHp}</div>
-                    <div class="health-bar-container">
-                        <div class="health-bar" style="width: ${hpPercent}%"></div>
-                    </div>
-                </div>`;
+        if (selectedUnit.type === 'player' && selectedUnit.id) {
+            // Player unit selected (base, turret, drone)
+            if (selectedUnit.id === 'base') {
+                unitInfo = `
+                    <div class="info-section">
+                        <div class="info-section-title">基地</div>
+                        <div style="font-size: 0.9rem; margin-bottom: 4px;">攻击力: 20/秒</div>
+                        <div style="font-size: 0.9rem; margin-bottom: 4px;">生命值: ${baseHp}/${baseMaxHp}</div>
+                        <div class="health-bar-container">
+                            <div class="health-bar" style="width: ${basePercent}%"></div>
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--text-dim); margin-top: 8px;">基地是你的核心，被摧毁即游戏结束</div>
+                    </div>`;
+            } else if (selectedUnit.id === 'turret') {
+                const operational = gameState.combat.turretsOperational;
+                const damaged = gameState.combat.turretsDamaged;
+                const total = operational + damaged;
+                const hpPercent = total > 0 ? (operational / total) * 100 : 0;
+                const canRepair = damaged > 0 && repairPacks >= 3 && !gameState.combat.inBattle;
+
+                unitInfo = `
+                    <div class="info-section">
+                        <div class="info-section-title">机枪塔</div>
+                        <div style="font-size: 0.9rem; margin-bottom: 4px;">攻击力: ${operational * 5}/秒</div>
+                        <div style="font-size: 0.9rem; margin-bottom: 4px;">可用: ${operational}座</div>
+                        <div style="font-size: 0.9rem; margin-bottom: 4px; color: ${damaged > 0 ? 'var(--danger-color)' : 'inherit'};">损坏: ${damaged}座</div>
+                        <div class="health-bar-container">
+                            <div class="health-bar" style="width: ${hpPercent}%"></div>
+                        </div>
+                        ${damaged > 0 ? `
+                            <div style="margin-top: 10px;">
+                                <button class="btn btn-repair ${canRepair ? '' : 'disabled'}" onclick="repairTurret()" ${canRepair ? '' : 'disabled'}>
+                                    修复 (消耗3修复包)
+                                </button>
+                                <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 4px;">
+                                    修复包: ${repairPacks}
+                                    ${gameState.combat.inBattle ? ' (战斗中无法修复)' : ''}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>`;
+            } else if (selectedUnit.id === 'drone') {
+                const drones = gameState.resources['drone'];
+                const current = drones?.current || 0;
+                const damaged = drones?.damaged || 0;
+                const max = drones?.max || 10;
+                const total = current + damaged;
+                const hpPercent = total > 0 ? (current / total) * 100 : 0;
+                const canRepair = damaged > 0 && repairPacks >= 1 && !gameState.combat.inBattle;
+
+                unitInfo = `
+                    <div class="info-section">
+                        <div class="info-section-title">无人机</div>
+                        <div style="font-size: 0.9rem; margin-bottom: 4px;">攻击力: ${current * 10}/秒</div>
+                        <div style="font-size: 0.9rem; margin-bottom: 4px;">可用: ${current}/${max}</div>
+                        <div style="font-size: 0.9rem; margin-bottom: 4px; color: ${damaged > 0 ? 'var(--danger-color)' : 'inherit'};">损坏: ${damaged}架</div>
+                        <div class="health-bar-container">
+                            <div class="health-bar" style="width: ${hpPercent}%"></div>
+                        </div>
+                        ${damaged > 0 ? `
+                            <div style="margin-top: 10px;">
+                                <button class="btn btn-repair ${canRepair ? '' : 'disabled'}" onclick="repairDrone()" ${canRepair ? '' : 'disabled'}>
+                                    修复 (消耗1修复包)
+                                </button>
+                                <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 4px;">
+                                    修复包: ${repairPacks}
+                                    ${gameState.combat.inBattle ? ' (战斗中无法修复)' : ''}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>`;
+            }
+        } else if (selectedUnit.type === 'enemy') {
+            // Enemy unit selected
+            const unit = gameState.combat.enemyUnits[selectedUnit.index];
+            if (unit) {
+                const hpPercent = (Math.max(0, unit.hp) / unit.maxHp) * 100;
+                unitInfo = `
+                    <div class="info-section">
+                        <div class="info-section-title">敌方单位</div>
+                        <div style="font-size: 1rem; color: var(--danger-color); margin-bottom: 8px;">${unit.name}</div>
+                        <div style="font-size: 0.9rem; margin-bottom: 4px;">数量: ${unit.count}</div>
+                        <div style="font-size: 0.9rem; margin-bottom: 4px;">攻击力: ${unit.attack}/秒</div>
+                        <div style="font-size: 0.9rem; margin-bottom: 4px;">生命值: ${Math.floor(unit.hp)}/${unit.maxHp}</div>
+                        <div class="health-bar-container enemy-hp-container">
+                            <div class="health-bar enemy-hp" style="width: ${hpPercent}%"></div>
+                        </div>
+                    </div>`;
+            }
         }
     }
 
@@ -1071,25 +1366,22 @@ function renderBattleInfoPanel() {
             <span class="info-status">${gameState.combat.inBattle ? '战斗中' : '安全'}</span>
         </div>
         <div class="info-section">
-            <div class="info-section-title">基地生命</div>
-            <div style="font-size: 1.1rem; color: var(--danger-color); margin: 4px 0;">${baseHp} / ${baseMaxHp}</div>
-            <div class="health-bar-container">
-                <div class="health-bar" style="width: ${basePercent}%"></div>
-            </div>
+            <div class="info-section-title">总攻击力</div>
+            <div style="font-size: 1.1rem; color: var(--primary-color); margin: 4px 0;">${getPlayerAttackPower()}/秒</div>
         </div>
         <div class="info-section">
             <div class="info-section-title">威胁等级</div>
             <div style="font-size: 1rem; color: var(--warning-color); margin: 4px 0;">Lv.${threat}</div>
             ${threat >= gameState.threat.minThreshold
                 ? `<div style="color: var(--text-dim); font-size: 0.85rem;">下波攻击: ${timer}秒</div>`
-                : `<div style="color: var(--success-color); font-size: 0.85rem;">安全 (低于阈值${gameState.threat.minThreshold})</div>`
+                : `<div style="color: var(--success-color); font-size: 0.85rem;">安全 (威胁低于${gameState.threat.minThreshold}级)</div>`
             }
         </div>
         ${unitInfo}`;
 }
 
-function selectUnit(type, index) {
-    selectedUnit = { type, index };
+function selectUnit(type, index, id = null) {
+    selectedUnit = { type, index, id };
     renderBattleTab();
     updateInfoPanel();
 }
@@ -1291,6 +1583,12 @@ function updateResourceBoxes() {
 }
 
 function updateBattleDisplay() {
+    // During battle, re-render the entire tab for smooth updates
+    if (gameState.combat.inBattle) {
+        renderBattleTab();
+        return;
+    }
+
     // Update combat log
     const logContainer = document.querySelector('.log-entries');
     if (logContainer) {
@@ -1298,17 +1596,57 @@ function updateBattleDisplay() {
             .map(entry => `<div class="log-entry">${entry}</div>`).join('');
     }
 
-    // Update enemy unit HP if in battle
-    if (gameState.combat.inBattle) {
-        gameState.combat.enemyUnits.forEach((unit, i) => {
-            const box = document.querySelector(`.unit-box.enemy[onclick="selectUnit('enemy', ${i})"]`);
-            if (box) {
-                const valueEl = box.querySelector('.box-value');
-                if (valueEl) {
-                    valueEl.textContent = `x${unit.count}`;
-                }
-            }
-        });
+    // Update base HP bar
+    const baseBox = document.querySelector('.unit-box.friendly[onclick*="base"]');
+    if (baseBox) {
+        const hpFill = baseBox.querySelector('.unit-hp-fill');
+        if (hpFill) {
+            const percent = (gameState.base.hp / gameState.base.maxHp) * 100;
+            hpFill.style.width = `${percent}%`;
+        }
+    }
+
+    // Update turret display
+    const turretBox = document.querySelector('.unit-box.friendly[onclick*="turret"]');
+    if (turretBox) {
+        const totalTurrets = gameState.combat.turretsOperational + gameState.combat.turretsDamaged;
+        const valueEl = turretBox.querySelector('.box-value');
+        if (valueEl) {
+            valueEl.textContent = `${gameState.combat.turretsOperational}/${totalTurrets}`;
+        }
+        const hpFill = turretBox.querySelector('.unit-hp-fill');
+        if (hpFill && totalTurrets > 0) {
+            const percent = (gameState.combat.turretsOperational / totalTurrets) * 100;
+            hpFill.style.width = `${percent}%`;
+        }
+        // Update damaged state
+        if (gameState.combat.turretsDamaged > 0) {
+            turretBox.classList.add('unit-damaged');
+        } else {
+            turretBox.classList.remove('unit-damaged');
+        }
+    }
+
+    // Update drone display
+    const droneBox = document.querySelector('.unit-box.friendly[onclick*="drone"]');
+    const drones = gameState.resources['drone'];
+    if (droneBox && drones) {
+        const valueEl = droneBox.querySelector('.box-value');
+        if (valueEl) {
+            valueEl.textContent = `${drones.current}/${drones.max}`;
+        }
+        const totalDrones = drones.current + (drones.damaged || 0);
+        const hpFill = droneBox.querySelector('.unit-hp-fill');
+        if (hpFill && totalDrones > 0) {
+            const percent = (drones.current / totalDrones) * 100;
+            hpFill.style.width = `${percent}%`;
+        }
+        // Update damaged state
+        if ((drones.damaged || 0) > 0) {
+            droneBox.classList.add('unit-damaged');
+        } else {
+            droneBox.classList.remove('unit-damaged');
+        }
     }
 }
 

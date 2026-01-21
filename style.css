@@ -641,6 +641,109 @@ body {
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+/* ===== BATTLE STATUS BAR ===== */
+.battle-status-bar {
+    margin-bottom: 16px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.status-bar-inner {
+    display: flex;
+    height: 24px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--bg-color);
+}
+
+.player-bar {
+    background: linear-gradient(90deg, #0088ff, #00ccff);
+    transition: width 0.3s ease;
+}
+
+.enemy-bar {
+    background: linear-gradient(90deg, #ff4444, #ff8800);
+    transition: width 0.3s ease;
+}
+
+.status-bar-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 0.85rem;
+}
+
+.player-hp { color: #00ccff; }
+.enemy-hp { color: #ff6666; }
+
+/* ===== UNIT HP BARS ===== */
+.unit-hp-bar {
+    height: 4px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 2px;
+    margin-top: 6px;
+    overflow: hidden;
+}
+
+.unit-hp-fill {
+    height: 100%;
+    background: var(--success-color);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+.unit-hp-bar.enemy-hp-bar {
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.unit-hp-fill.enemy-hp-fill {
+    background: var(--danger-color);
+}
+
+/* ===== DAMAGED UNIT STATE ===== */
+.unit-damaged {
+    border-color: var(--danger-color) !important;
+    animation: pulse-damage 1.5s infinite;
+}
+
+@keyframes pulse-damage {
+    0%, 100% { box-shadow: 0 0 5px rgba(255, 100, 100, 0.3); }
+    50% { box-shadow: 0 0 12px rgba(255, 100, 100, 0.6); }
+}
+
+/* ===== REPAIR BUTTON ===== */
+.btn-repair {
+    width: 100%;
+    background: linear-gradient(180deg, #44aa44, #228822);
+    border-color: #44aa44;
+    color: white;
+}
+
+.btn-repair:hover:not(:disabled) {
+    background: linear-gradient(180deg, #55bb55, #33aa33);
+    box-shadow: 0 0 8px rgba(68, 170, 68, 0.5);
+}
+
+.btn-repair:disabled,
+.btn-repair.disabled {
+    background: #333;
+    border-color: #444;
+    color: #666;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* ===== ENEMY HP IN INFO PANEL ===== */
+.enemy-hp-container .health-bar {
+    background: var(--danger-color);
+}
+
+.health-bar.enemy-hp {
+    background: var(--danger-color);
+}
+
 /* ===== BUTTONS ===== */
 .btn {
     padding: 8px 16px;

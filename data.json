@@ -64,7 +64,7 @@
       "id": "space",
       "name": "空间",
       "category": "meta",
-      "baseStorage": 10
+      "baseStorage": 100
     },
     "science-red": {
       "id": "science-red",
@@ -86,6 +86,18 @@
       "category": "science",
       "baseStorage": 100,
       "tier": 3
+    },
+    "drone": {
+      "id": "drone",
+      "name": "无人机",
+      "category": "military",
+      "baseStorage": 10
+    },
+    "repair-pack": {
+      "id": "repair-pack",
+      "name": "修复包",
+      "category": "material",
+      "baseStorage": 50
     }
   },
   "buildings": {
@@ -93,7 +105,7 @@
       "id": "miner-iron",
       "name": "铁矿机",
       "category": "mining",
-      "spaceCost": 1,
+      "spaceCost": 5,
       "buildCost": {
         "stone": 5
       },
@@ -110,7 +122,7 @@
       "id": "miner-copper",
       "name": "铜矿机",
       "category": "mining",
-      "spaceCost": 1,
+      "spaceCost": 5,
       "buildCost": {
         "stone": 5
       },
@@ -127,7 +139,7 @@
       "id": "miner-coal",
       "name": "采煤机",
       "category": "mining",
-      "spaceCost": 1,
+      "spaceCost": 5,
       "buildCost": {
         "stone": 5
       },
@@ -144,7 +156,7 @@
       "id": "miner-stone",
       "name": "采石场",
       "category": "mining",
-      "spaceCost": 1,
+      "spaceCost": 5,
       "buildCost": {
         "iron-plate": 5
       },
@@ -161,7 +173,7 @@
       "id": "furnace-iron-plate",
       "name": "铁锻炉",
       "category": "smelting",
-      "spaceCost": 1,
+      "spaceCost": 3,
       "buildCost": {
         "stone": 10
       },
@@ -179,7 +191,7 @@
       "id": "furnace-copper-plate",
       "name": "铜锻炉",
       "category": "smelting",
-      "spaceCost": 1,
+      "spaceCost": 3,
       "buildCost": {
         "stone": 10
       },
@@ -197,7 +209,7 @@
       "id": "furnace-steel",
       "name": "炼钢炉",
       "category": "smelting",
-      "spaceCost": 2,
+      "spaceCost": 3,
       "buildCost": {
         "stone": 20,
         "iron-plate": 10
@@ -217,7 +229,7 @@
       "id": "assembler-gear",
       "name": "齿轮厂",
       "category": "crafting",
-      "spaceCost": 1,
+      "spaceCost": 4,
       "buildCost": {
         "iron-plate": 15
       },
@@ -235,7 +247,7 @@
       "id": "assembler-circuit",
       "name": "电路厂",
       "category": "crafting",
-      "spaceCost": 1,
+      "spaceCost": 4,
       "buildCost": {
         "iron-plate": 10,
         "copper-plate": 5
@@ -255,7 +267,7 @@
       "id": "assembler-science-red",
       "name": "红包厂",
       "category": "crafting",
-      "spaceCost": 1,
+      "spaceCost": 5,
       "buildCost": {
         "iron-plate": 15,
         "copper-plate": 10
@@ -275,7 +287,7 @@
       "id": "assembler-science-green",
       "name": "绿包厂",
       "category": "crafting",
-      "spaceCost": 2,
+      "spaceCost": 5,
       "buildCost": {
         "iron-plate": 30,
         "copper-plate": 20,
@@ -296,7 +308,7 @@
       "id": "assembler-science-blue",
       "name": "蓝包厂",
       "category": "crafting",
-      "spaceCost": 2,
+      "spaceCost": 5,
       "buildCost": {
         "steel": 20,
         "circuit": 15,
@@ -317,7 +329,7 @@
       "id": "generator-coal",
       "name": "火电站",
       "category": "power",
-      "spaceCost": 1,
+      "spaceCost": 5,
       "buildCost": {
         "stone": 10,
         "iron-plate": 5
@@ -352,7 +364,7 @@
       "id": "turret-basic",
       "name": "机枪塔",
       "category": "defense",
-      "spaceCost": 1,
+      "spaceCost": 2,
       "buildCost": {
         "iron-plate": 15,
         "gear": 5,
@@ -371,7 +383,7 @@
       "id": "factory-drone-gun",
       "name": "无人机厂",
       "category": "military",
-      "spaceCost": 2,
+      "spaceCost": 4,
       "buildCost": {
         "iron-plate": 30,
         "gear": 15,
@@ -382,14 +394,31 @@
         "circuit": 1,
         "energy": 10
       },
-      "produces": {},
+      "produces": {
+        "drone": 1
+      },
       "cycleTime": 2.0,
-      "requiresTech": "military-2",
-      "producesDrone": {
-        "type": "drone-gun",
-        "hp": 50,
-        "attack": 10
-      }
+      "requiresTech": "military-2"
+    },
+    "assembler-repair-pack": {
+      "id": "assembler-repair-pack",
+      "name": "修复包厂",
+      "category": "crafting",
+      "spaceCost": 4,
+      "buildCost": {
+        "iron-plate": 20,
+        "gear": 10
+      },
+      "consumes": {
+        "iron-plate": 1,
+        "gear": 1,
+        "energy": 3
+      },
+      "produces": {
+        "repair-pack": 1
+      },
+      "cycleTime": 1.5,
+      "requiresTech": "repair-tech"
     },
     "expander": {
       "id": "expander",
@@ -406,7 +435,7 @@
       "cycleTime": 0,
       "requiresTech": null,
       "special": "expander",
-      "expandAmount": 5,
+      "expandAmount": 50,
       "threatIncrease": 1
     }
   },
@@ -455,6 +484,22 @@
       "tier": 2,
       "unlocks": [
         "furnace-steel"
+      ]
+    },
+    "repair-tech": {
+      "id": "repair-tech",
+      "name": "维修学",
+      "description": "解锁修复包生产",
+      "prerequisites": [
+        "automation-1"
+      ],
+      "cost": {
+        "science-red": 15,
+        "science-green": 10
+      },
+      "tier": 2,
+      "unlocks": [
+        "assembler-repair-pack"
       ]
     },
     "solar-energy": {
