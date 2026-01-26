@@ -28,7 +28,13 @@ let gameState = {
         enemyUnits: [],   // [{ type, count, hp, maxHp, attack }, ...]
         log: [],
         turretsOperational: 0,  // 可用机枪塔数量
-        turretsDamaged: 0       // 损坏的机枪塔数量
+        turretsDamaged: 0,      // 损坏的机枪塔数量
+        // Flow combat state
+        pollution: 0,           // Current pollution rate (threat inflow)
+        suppression: 0,         // Current suppression rate (from turrets)
+        netThreat: 0,           // Net threat = pollution - suppression
+        defenseHP: 0,           // Combined defense HP pool
+        defenseMaxHP: 0         // Max defense HP
     },
     threat: {
         level: 0,
@@ -159,11 +165,10 @@ function gameLoop() {
     gameState.stats.totalProduction['energy'] = (gameState.stats.totalProduction['energy'] || 0) + gameState.base.energyGeneration;
 
     processBuildings(dt);
-    updateThreat(dt);
 
-    if (gameState.combat.inBattle) {
-        processCombat(dt);
-    }
+    // Flow-based combat (V2.0) - replaces wave-based system
+    // Combat is now continuous based on pollution vs suppression
+    processCombatFlow(dt);
 
     // Only update status panel (left sidebar) - always safe
     updateStatusPanel();
@@ -179,6 +184,9 @@ function gameLoop() {
 
     // Update info panel values only (not structure)
     updateInfoPanelValues();
+
+    // Update danger overlay (screen edge warning)
+    updateDangerOverlay();
 }
 
 function resetTickStats() {
@@ -311,6 +319,13 @@ function buildBuilding(id) {
     }
 
     showToast(`已建造 ${building.name}！`, 'success');
+
+    // Floating text feedback for building construction
+    const btn = document.querySelector(`.building-box[onclick*="'${id}'"]`);
+    if (btn) {
+        spawnFloatingTextAtElement(btn, `+1 ${building.name}`, 'var(--success-color)', false);
+    }
+
     renderCurrentTab();
     updateInfoPanel();
     return true;
@@ -541,8 +556,11 @@ function gameOver() {
     gameState.combat.log.push('基地被摧毁！游戏结束！');
     showToast('游戏结束 - 基地被摧毁！', 'error');
 
-    const modal = document.getElementById('game-over-modal');
-    if (modal) modal.style.display = 'flex';
+    // Only access DOM in browser environment
+    if (typeof document !== 'undefined') {
+        const modal = document.getElementById('game-over-modal');
+        if (modal) modal.style.display = 'flex';
+    }
 }
 
 function restartGame() {
@@ -563,6 +581,12 @@ function getPlayerTotalHP() {
         hp += drones.current * 50;
     }
 
+    // Wall HP (walls are buildings that add to defense pool)
+    const stoneWalls = getBuildingCount('wall-stone');
+    const steelWalls = getBuildingCount('wall-steel');
+    hp += stoneWalls * 50;  // Stone wall: 50 HP each
+    hp += steelWalls * 150; // Steel wall: 150 HP each
+
     return hp;
 }
 
@@ -579,6 +603,12 @@ function getPlayerMaxHP() {
         const totalDrones = drones.current + (drones.damaged || 0);
         maxHp += totalDrones * 50;
     }
+
+    // Wall HP (walls are always at full health)
+    const stoneWalls = getBuildingCount('wall-stone');
+    const steelWalls = getBuildingCount('wall-steel');
+    maxHp += stoneWalls * 50;  // Stone wall: 50 HP each
+    maxHp += steelWalls * 150; // Steel wall: 150 HP each
 
     return maxHp;
 }
@@ -597,6 +627,208 @@ function getEnemyMaxHP() {
         maxHp += unit.maxHp;
     }
     return maxHp;
+}
+
+// ===== Flow-based Combat System (V2.0) =====
+
+/**
+ * Calculate total pollution rate from all running buildings
+ * Pollution serves as the "enemy attack power" in flow combat
+ */
+function getTotalPollutionRate() {
+    let pollution = 0;
+    for (const [id, count] of Object.entries(gameState.buildings)) {
+        if (count <= 0) continue;
+        const building = GameData.buildings[id];
+        if (!building || !building.pollution) continue;
+        // Pollution rate = pollution per cycle * cycles per second * count
+        const cycleTime = building.cycleTime || 1;
+        const pollutionPerSecond = (building.pollution / cycleTime) * count;
+        pollution += pollutionPerSecond;
+    }
+    return pollution;
+}
+
+/**
+ * Calculate suppression rate from turrets (requires ammo)
+ * Returns { suppression: number, ammoNeeded: number }
+ */
+function getSuppressionRate() {
+    const turretData = GameData.buildings['turret-basic'];
+    if (!turretData || !turretData.defense) return { suppression: 0, ammoNeeded: 0 };
+
+    const turretCount = gameState.combat.turretsOperational;
+    if (turretCount <= 0) return { suppression: 0, ammoNeeded: 0 };
+
+    const ammoPerSecond = turretData.defense.ammoPerSecond || 2;
+    const suppressionPerAmmo = turretData.defense.suppressionPerAmmo || 5;
+
+    const ammoNeeded = turretCount * ammoPerSecond;  // per second
+    const baseSuppression = turretCount * ammoPerSecond * suppressionPerAmmo;  // 10 per turret per second
+
+    // Drones also provide suppression (10/s each, no ammo needed)
+    const drones = gameState.resources['drone'];
+    const droneCount = drones ? drones.current : 0;
+    const droneSuppression = droneCount * 10;
+
+    // Base provides base suppression of 20/s
+    const basePower = 20;
+
+    return {
+        suppression: baseSuppression + droneSuppression + basePower,
+        ammoNeeded: ammoNeeded
+    };
+}
+
+/**
+ * Process flow-based combat each tick
+ * Replaces wave-based combat with continuous threat management
+ */
+function processCombatFlow(dt) {
+    // 1. Calculate pollution (threat inflow) from all running buildings
+    const rawPollution = getTotalPollutionRate();
+
+    // Apply pollution buffer: pollution < 100 means no effective threat
+    const POLLUTION_BUFFER = 100;
+    const effectivePollution = Math.max(0, rawPollution - POLLUTION_BUFFER);
+    gameState.combat.pollution = effectivePollution;
+    gameState.combat.rawPollution = rawPollution; // Store raw value for display
+
+    // 2. Calculate base suppression (without ammo consumption)
+    // Drones (10/s each) + Base (20/s) don't need ammo
+    const drones = gameState.resources['drone'];
+    const droneCount = drones ? drones.current : 0;
+    const droneSuppression = droneCount * 10;
+    const basePower = 20;
+    const passiveSuppression = droneSuppression + basePower;
+
+    // 3. Calculate potential turret suppression
+    const turretData = GameData.buildings['turret-basic'];
+    const turretCount = gameState.combat.turretsOperational;
+    const ammoPerSecond = turretData?.defense?.ammoPerSecond || 2;
+    const suppressionPerAmmo = turretData?.defense?.suppressionPerAmmo || 5;
+    const maxTurretSuppression = turretCount * ammoPerSecond * suppressionPerAmmo;
+
+    // 4. Only consume ammo if we need turrets to fire (pollution > passive suppression)
+    let turretSuppression = 0;
+    const needsActiveFire = effectivePollution > passiveSuppression;
+
+    if (needsActiveFire && turretCount > 0) {
+        const ammo = gameState.resources['ammo'];
+        const ammoAvailable = ammo ? ammo.current : 0;
+        const ammoNeeded = turretCount * ammoPerSecond;
+        const ammoToConsume = ammoNeeded * dt;
+
+        let efficiency = 1.0;
+        if (ammoToConsume > 0) {
+            if (ammoAvailable >= ammoToConsume) {
+                // Consume ammo
+                if (ammo) ammo.current -= ammoToConsume;
+            } else {
+                // Ammo shortage - suppression reduced proportionally
+                efficiency = ammoAvailable / ammoToConsume;
+                if (ammo) ammo.current = 0;
+            }
+        }
+        turretSuppression = maxTurretSuppression * efficiency;
+    }
+
+    const totalSuppression = turretSuppression + passiveSuppression;
+    gameState.combat.suppression = totalSuppression;
+
+    // 5. Calculate net threat
+    const netThreat = effectivePollution - totalSuppression;
+    gameState.combat.netThreat = netThreat;
+
+    // 6. If net threat > 0, apply damage to defenses
+    if (netThreat > 0) {
+        const damageDealt = netThreat * dt;
+        applyDamageToPlayer(damageDealt);
+
+        // Set inBattle flag if we're taking damage
+        if (!gameState.combat.inBattle && damageDealt > 0) {
+            gameState.combat.inBattle = true;
+            gameState.combat.log.push(`污染突破防线！正在受到伤害...`);
+        }
+    } else {
+        // Defense holding - exit battle state
+        if (gameState.combat.inBattle) {
+            gameState.combat.inBattle = false;
+            gameState.combat.log.push(`防线稳固，污染被压制`);
+        }
+    }
+
+    // 7. Process auto-repair flow (uses repair packs)
+    processRepairFlow(dt);
+
+    // Update defense HP tracking
+    gameState.combat.defenseHP = getPlayerTotalHP();
+    gameState.combat.defenseMaxHP = getPlayerMaxHP();
+
+    // Check game over
+    if (gameState.base.hp <= 0) {
+        gameOver();
+    }
+}
+
+/**
+ * Auto-repair flow: drones consume repair packs to heal damaged units
+ * Only active when not under heavy attack and when there's something to repair
+ */
+function processRepairFlow(dt) {
+    // Only repair when net threat <= 0 (defense holding)
+    if (gameState.combat.netThreat > 0) return;
+
+    const packs = gameState.resources['repair-pack'];
+    if (!packs || packs.current <= 0) return;
+
+    // Check if anything needs repair
+    const turretsDamaged = gameState.combat.turretsDamaged > 0;
+    const dronesDamaged = gameState.resources['drone'] && gameState.resources['drone'].damaged > 0;
+    const baseNeedsRepair = gameState.base.hp < gameState.base.maxHp;
+
+    // Don't consume repair packs if nothing needs repair
+    if (!turretsDamaged && !dronesDamaged && !baseNeedsRepair) return;
+
+    // Repair rate: 1 repair pack = 25 HP, consume 0.5/s when idle
+    const repairRate = 0.5;  // packs per second
+    const hpPerPack = 25;
+    const repairNeeded = repairRate * dt;
+
+    if (packs.current < repairNeeded) return;
+
+    // Priority: repair turrets first, then drones, then base
+    if (turretsDamaged) {
+        // Accumulate repair progress
+        gameState.combat.turretRepairProgress = (gameState.combat.turretRepairProgress || 0) + repairNeeded * hpPerPack;
+        packs.current -= repairNeeded;
+
+        // 100 HP to fully repair a turret (4 repair packs worth)
+        if (gameState.combat.turretRepairProgress >= 100) {
+            gameState.combat.turretRepairProgress -= 100;
+            gameState.combat.turretsDamaged--;
+            gameState.combat.turretsOperational++;
+            gameState.combat.log.push(`自动修复：机枪塔恢复运行`);
+        }
+    } else if (dronesDamaged) {
+        // Accumulate repair progress for drones
+        gameState.combat.droneRepairProgress = (gameState.combat.droneRepairProgress || 0) + repairNeeded * hpPerPack;
+        packs.current -= repairNeeded;
+
+        // 50 HP to fully repair a drone (2 repair packs worth)
+        if (gameState.combat.droneRepairProgress >= 50) {
+            gameState.combat.droneRepairProgress -= 50;
+            gameState.resources['drone'].damaged--;
+            gameState.resources['drone'].current++;
+            gameState.combat.log.push(`自动修复：无人机恢复运行`);
+        }
+    } else if (baseNeedsRepair) {
+        // Repair base HP
+        const healAmount = repairNeeded * hpPerPack;
+        const actualHeal = Math.min(healAmount, gameState.base.maxHp - gameState.base.hp);
+        gameState.base.hp += actualHeal;
+        packs.current -= repairNeeded;
+    }
 }
 
 // ===== Repair Functions =====
@@ -686,6 +918,13 @@ function unlockResearch(id) {
     spendResources(tech.cost || {});
     gameState.research.completed.push(id);
     showToast(`研究完成: ${tech.name}！`, 'success');
+
+    // Floating text feedback for research completion
+    const btn = document.querySelector(`[onclick="unlockResearch('${id}')"]`);
+    if (btn) {
+        spawnFloatingTextAtElement(btn, `✓ ${tech.name}`, '#ffd700', true);
+    }
+
     renderCurrentTab();
     updateInfoPanel();
     return true;
@@ -761,26 +1000,123 @@ function updateStatusPanel() {
     const energyEl = document.getElementById('status-energy');
     const spaceEl = document.getElementById('status-space');
     const threatEl = document.getElementById('status-threat');
+    const energyBarEl = document.getElementById('status-energy-bar');
+    const spaceBarEl = document.getElementById('status-space-bar');
 
     if (energyEl) {
         const energy = Math.floor(getResource('energy'));
         const energyMax = getResourceMax('energy');
         energyEl.textContent = `${energy}/${energyMax}`;
+
+        // Update energy progress bar
+        if (energyBarEl) {
+            const energyPercent = energyMax > 0 ? (energy / energyMax) * 100 : 0;
+            const energyDelta = getNetRate('energy');
+            let energyBarColor = 'var(--danger-color)'; // red
+            if (energyDelta >= 0) {
+                energyBarColor = 'var(--success-color)'; // green
+            } else if (energyDelta > -10) {
+                energyBarColor = 'var(--warning-color)'; // yellow
+            }
+            energyBarEl.style.width = `${energyPercent}%`;
+            energyBarEl.style.backgroundColor = energyBarColor;
+            // Add flow-stripe animation when energy is being produced
+            energyBarEl.classList.toggle('active', energyDelta > 0);
+        }
     }
 
     if (spaceEl) {
-        spaceEl.textContent = `${getSpaceUsed()}/${getSpaceMax()}`;
+        const spaceUsed = getSpaceUsed();
+        const spaceMax = getSpaceMax();
+        spaceEl.textContent = `${spaceUsed}/${spaceMax}`;
+
+        // Update space progress bar
+        if (spaceBarEl) {
+            const spacePercent = spaceMax > 0 ? (spaceUsed / spaceMax) * 100 : 0;
+            let spaceBarColor = 'var(--success-color)'; // green
+            if (spacePercent >= 75) {
+                spaceBarColor = 'var(--danger-color)'; // red
+            } else if (spacePercent >= 50) {
+                spaceBarColor = 'var(--warning-color)'; // yellow
+            }
+            spaceBarEl.style.width = `${spacePercent}%`;
+            spaceBarEl.style.backgroundColor = spaceBarColor;
+        }
     }
 
     if (threatEl) {
         const threat = gameState.threat.level;
         const timer = Math.ceil(gameState.threat.timer);
+        const pollution = gameState.combat.pollution || 0;
+        const suppression = gameState.combat.suppression || 0;
+        const netThreat = gameState.combat.netThreat || 0;
+
         if (threat >= gameState.threat.minThreshold) {
             threatEl.textContent = `Lv.${threat} (${timer}s)`;
             threatEl.classList.add('warning');
         } else {
             threatEl.textContent = `Lv.${threat} (安全)`;
             threatEl.classList.remove('warning');
+        }
+
+        // Update threat bar - shows suppression margin (green = safe, red = danger)
+        const threatBarEl = document.getElementById('status-threat-bar');
+        const threatDetailEl = document.getElementById('status-threat-detail');
+        if (threatBarEl) {
+            // Calculate margin: positive = safe (suppression > pollution), negative = danger
+            const margin = suppression - pollution;
+            const maxMargin = Math.max(suppression, pollution, 1);
+            let barPercent, barColor;
+
+            if (pollution === 0) {
+                // No pollution = 100% safe
+                barPercent = 100;
+                barColor = 'var(--success-color)';
+            } else if (margin >= 0) {
+                // Safe: bar shows how much suppression margin we have
+                barPercent = Math.min(100, (suppression / maxMargin) * 100);
+                barColor = 'var(--success-color)';
+            } else {
+                // Danger: bar shows how much we're lacking
+                barPercent = Math.min(100, (pollution / maxMargin) * 100);
+                barColor = 'var(--danger-color)';
+            }
+
+            threatBarEl.style.width = `${barPercent}%`;
+            threatBarEl.style.backgroundColor = barColor;
+        }
+        if (threatDetailEl) {
+            if (netThreat > 0) {
+                threatDetailEl.textContent = `受损中 -${netThreat.toFixed(1)}/s`;
+                threatDetailEl.style.color = 'var(--danger-color)';
+            } else if (pollution > 0) {
+                threatDetailEl.textContent = `压制中 +${Math.abs(netThreat).toFixed(1)}/s`;
+                threatDetailEl.style.color = 'var(--success-color)';
+            } else {
+                threatDetailEl.textContent = '无威胁';
+                threatDetailEl.style.color = 'var(--text-dim)';
+            }
+        }
+    }
+
+    // Update defense HP bar
+    const defenseEl = document.getElementById('status-defense');
+    const defenseBarEl = document.getElementById('status-defense-bar');
+    if (defenseEl && defenseBarEl) {
+        const currentHP = getPlayerTotalHP();
+        const maxHP = getPlayerMaxHP();
+        const hpPercent = maxHP > 0 ? (currentHP / maxHP) * 100 : 100;
+
+        defenseEl.textContent = `${Math.floor(currentHP)}/${maxHP}`;
+        defenseBarEl.style.width = `${hpPercent}%`;
+
+        // Color based on HP percentage
+        if (hpPercent > 50) {
+            defenseBarEl.style.backgroundColor = 'var(--success-color)';
+        } else if (hpPercent > 25) {
+            defenseBarEl.style.backgroundColor = 'var(--warning-color)';
+        } else {
+            defenseBarEl.style.backgroundColor = 'var(--danger-color)';
         }
     }
 
@@ -824,7 +1160,119 @@ function updateInfoPanel() {
             break;
     }
 
-    panel.innerHTML = html || '<div class="info-placeholder">点击左侧项目查看详情</div>';
+    // If no specific panel content, show dashboard
+    if (!html) {
+        html = renderDashboardPanel();
+    }
+
+    panel.innerHTML = html;
+}
+
+// ===== DASHBOARD PANEL (Factory Overview) =====
+function renderDashboardPanel() {
+    // Power status
+    const energy = Math.floor(getResource('energy'));
+    const energyMax = getResourceMax('energy');
+    const energyNet = getNetRate('energy');
+    let powerStatus = '正常';
+    let powerClass = 'safe';
+    if (energyNet < -10) {
+        powerStatus = '严重不足';
+        powerClass = 'danger';
+    } else if (energyNet < 0) {
+        powerStatus = '不足';
+        powerClass = 'warning';
+    }
+
+    // Find bottleneck (most negative rate)
+    let bottleneck = null;
+    let worstRate = 0;
+    for (const id of Object.keys(GameData.resources)) {
+        const net = getNetRate(id);
+        if (net < worstRate) {
+            worstRate = net;
+            bottleneck = GameData.resources[id];
+        }
+    }
+
+    // Space usage
+    const spaceUsed = getSpaceUsed();
+    const spaceMax = getSpaceMax();
+    const spacePercent = spaceMax > 0 ? (spaceUsed / spaceMax) * 100 : 0;
+
+    // Threat status
+    const threat = gameState.threat.level;
+    const timer = Math.ceil(gameState.threat.timer);
+    const pollution = gameState.combat.pollution || 0;
+    const suppression = gameState.combat.suppression || 0;
+
+    // Next research recommendation
+    let nextResearch = null;
+    for (const [id, tech] of Object.entries(GameData.technologies)) {
+        if (gameState.research.completed.includes(id)) continue;
+        const prereqsMet = tech.prerequisites.every(p => gameState.research.completed.includes(p));
+        if (prereqsMet) {
+            nextResearch = tech;
+            break;
+        }
+    }
+
+    return `
+        <div class="dashboard-panel">
+            <div class="info-header">
+                <span class="info-name">工厂概览</span>
+                <span class="info-status">Dashboard</span>
+            </div>
+
+            <div class="info-section">
+                <div class="info-section-title">电力状态</div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span>${energy}/${energyMax}</span>
+                    <span class="rate-indicator ${powerClass}">${energyNet >= 0 ? '+' : ''}${energyNet.toFixed(1)}/s</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${(energy / energyMax) * 100}%"></div>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <div class="info-section-title">空间使用</div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span>${spaceUsed}/${spaceMax}</span>
+                    <span style="color: ${spacePercent > 80 ? 'var(--danger-color)' : 'var(--text-dim)'}">${spacePercent.toFixed(0)}%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${spacePercent}%; background-color: ${spacePercent > 80 ? 'var(--danger-color)' : 'var(--accent-color)'}"></div>
+                </div>
+            </div>
+
+            ${bottleneck && worstRate < -1 ? `
+            <div class="info-section" style="background: rgba(255, 153, 51, 0.1); padding: 8px; border-radius: 4px; border-left: 3px solid var(--warning-color);">
+                <div class="info-section-title" style="color: var(--warning-color);">⚠ 瓶颈警告</div>
+                <div style="font-size: 0.9rem;">${bottleneck.name} 产量限制中</div>
+                <div class="rate-indicator ${worstRate < -5 ? 'critical' : 'negative'}">${worstRate.toFixed(1)}/s</div>
+            </div>
+            ` : ''}
+
+            <div class="info-section">
+                <div class="info-section-title">威胁状态</div>
+                <div style="font-size: 0.9rem; margin-bottom: 4px;">
+                    威胁等级: Lv.${threat} ${threat >= gameState.threat.minThreshold ? `(${timer}s)` : ''}
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-dim);">
+                    污染: ${pollution.toFixed(1)}/s | 压制: ${suppression.toFixed(1)}/s
+                </div>
+            </div>
+
+            ${nextResearch ? `
+            <div class="info-section">
+                <div class="info-section-title">推荐科研</div>
+                <div style="font-size: 0.9rem; color: var(--accent-color);">${nextResearch.name}</div>
+                <div style="font-size: 0.85rem; color: var(--text-dim);">${nextResearch.description}</div>
+            </div>
+            ` : ''}
+        </div>
+    `;
 }
 
 // ===== BUILDINGS TAB =====
@@ -859,6 +1307,20 @@ function renderBuildingsTab() {
             const isSelected = selectedBuilding === building.id;
             const isLocked = building.requiresTech && !gameState.research.completed.includes(building.requiresTech);
 
+            // Skip locked buildings - don't display them at all
+            if (isLocked) continue;
+
+            // Determine building tier for visual styling
+            let tierClass = 'tier-1';
+            if (building.requiresTech) {
+                const tech = GameData.technologies[building.requiresTech];
+                if (tech && tech.tier >= 3) {
+                    tierClass = 'tier-3';
+                } else if (tech && tech.tier >= 2) {
+                    tierClass = 'tier-2';
+                }
+            }
+
             // Get main product info
             let productInfo = '';
             if (building.produces && Object.keys(building.produces).length > 0) {
@@ -871,7 +1333,7 @@ function renderBuildingsTab() {
             }
 
             html += `
-                <div class="game-box building-box ${isSelected ? 'selected' : ''} ${isLocked ? 'locked' : ''}"
+                <div class="game-box building-box ${tierClass} ${isSelected ? 'selected' : ''}"
                      onclick="selectBuilding('${building.id}')">
                     <div class="box-line1">
                         <span class="box-name">${building.name}</span>
@@ -1050,16 +1512,27 @@ function renderResourcesTab() {
             const current = Math.floor(getResource(res.id));
             const isSelected = selectedResource === res.id;
             const net = getNetRate(res.id);
+
+            // Enhanced rate indicator with arrows and critical state
             let rateClass = 'neutral';
-            if (net > 0.1) rateClass = 'positive';
-            else if (net < -0.1) rateClass = 'negative';
+            let rateArrow = '';
+            if (net > 0.1) {
+                rateClass = 'positive';
+                rateArrow = '▲ ';
+            } else if (net < -5) {
+                rateClass = 'critical';  // Severe deficit - flashing red
+                rateArrow = '▼ ';
+            } else if (net < -0.1) {
+                rateClass = 'negative';
+                rateArrow = '▼ ';
+            }
 
             html += `
                 <div class="game-box resource-box ${isSelected ? 'selected' : ''}"
                      onclick="selectResource('${res.id}')">
                     <div class="box-name">${res.name}</div>
                     <div class="box-amount">${current}</div>
-                    <div class="box-rate ${rateClass}">${net >= 0 ? '+' : ''}${net.toFixed(1)}/s</div>
+                    <div class="box-rate rate-indicator ${rateClass}">${rateArrow}${net >= 0 ? '+' : ''}${net.toFixed(1)}/s</div>
                 </div>`;
         }
 
@@ -1144,107 +1617,174 @@ function renderBattleTab() {
 
     let html = '';
 
-    // Battle status bar (only during combat)
-    if (gameState.combat.inBattle) {
-        const playerHP = getPlayerTotalHP();
-        const enemyHP = getEnemyTotalHP();
-        const totalHP = playerHP + enemyHP;
-        const playerPercent = totalHP > 0 ? (playerHP / totalHP) * 100 : 50;
+    // ===== COMBAT STATUS (Simplified Two-Bar Design) =====
+    const pollution = gameState.combat.pollution || 0;
+    const suppression = gameState.combat.suppression || 0;
+    const netThreat = gameState.combat.netThreat || 0;
 
-        html += `
-            <div class="battle-status-bar">
-                <div class="status-bar-inner">
-                    <div class="player-bar" style="width: ${playerPercent}%"></div>
-                    <div class="enemy-bar" style="width: ${100 - playerPercent}%"></div>
-                </div>
-                <div class="status-bar-labels">
-                    <span class="player-hp">我方: ${Math.floor(playerHP)}/${Math.floor(getPlayerMaxHP())}</span>
-                    <span class="enemy-hp">敌方: ${Math.floor(enemyHP)}/${Math.floor(getEnemyMaxHP())}</span>
-                </div>
-            </div>`;
+    // Normalize bars relative to max of the two values
+    const maxVal = Math.max(pollution, suppression, 1);
+    const threatPercent = (pollution / maxVal) * 100;
+    const suppressPercent = (suppression / maxVal) * 100;
+
+    // Determine status
+    let statusClass = 'safe';
+    let statusText = '防线稳固';
+    let statusIcon = '✓';
+    if (netThreat > 10) {
+        statusClass = 'danger';
+        statusText = '污染超载!';
+        statusIcon = '⚠';
+    } else if (netThreat > 0) {
+        statusClass = 'warning';
+        statusText = '压制力不足';
+        statusIcon = '!';
     }
 
-    html += '<div class="battle-layout">';
-
-    // Player units section
-    html += `<div class="battle-section">
-        <div class="battle-section-title friendly">我方单位</div>
-        <div class="boxes-container">`;
-
-    // 基地 (always shown)
-    const baseSelected = selectedUnit?.type === 'player' && selectedUnit?.id === 'base';
-    const baseHpPercent = (gameState.base.hp / gameState.base.maxHp) * 100;
     html += `
-        <div class="game-box unit-box friendly ${baseSelected ? 'selected' : ''}"
-             onclick="selectUnit('player', 0, 'base')">
-            <div class="box-name">基地</div>
-            <div class="box-value">20/s</div>
-            <div class="unit-hp-bar">
-                <div class="unit-hp-fill" style="width: ${baseHpPercent}%"></div>
+        <div class="combat-status-panel">
+            <div class="combat-status-header ${statusClass}">
+                <span class="status-icon">${statusIcon}</span>
+                <span class="status-text">${statusText}</span>
+            </div>
+            <div class="combat-bars">
+                <div class="combat-bar-row threat">
+                    <span class="bar-label">威胁</span>
+                    <div class="bar-track">
+                        <div class="bar-fill threat" style="width: ${threatPercent}%"></div>
+                    </div>
+                    <span class="bar-value">${pollution.toFixed(1)}/s</span>
+                </div>
+                <div class="combat-bar-row suppress">
+                    <span class="bar-label">压制</span>
+                    <div class="bar-track">
+                        <div class="bar-fill suppress" style="width: ${suppressPercent}%"></div>
+                    </div>
+                    <span class="bar-value">${suppression.toFixed(1)}/s</span>
+                </div>
+            </div>
+            <div class="combat-net-result ${statusClass}">
+                净值: ${netThreat >= 0 ? '+' : ''}${netThreat.toFixed(1)}/s
+                ${netThreat > 0 ? '(正在受损)' : '(安全)'}
             </div>
         </div>`;
 
-    // 机枪塔 (only if any built)
+    // ===== THREE-COLUMN UNIT LAYOUT =====
+    html += '<div class="battle-units-grid">';
+
+    // --- Column 1: DEFENSE (防御) ---
+    // Calculate aggregated defense stats
+    const totalDefenseHP = getPlayerTotalHP();
+    const maxDefenseHP = getPlayerMaxHP();
+    const defensePercent = maxDefenseHP > 0 ? (totalDefenseHP / maxDefenseHP) * 100 : 100;
+    const defenseClass = defensePercent > 50 ? 'healthy' : defensePercent > 25 ? 'warning' : 'critical';
+
+    // Count defense buildings
+    const stoneWalls = getBuildingCount('wall-stone');
+    const steelWalls = getBuildingCount('wall-steel');
+    const totalWalls = stoneWalls + steelWalls;
+    const wallHP = stoneWalls * 50 + steelWalls * 150;
+
+    html += `
+        <div class="battle-unit-column">
+            <div class="column-header defense">🛡️ 防御</div>
+            <div class="unit-stat-card">
+                <div class="stat-title">总防御血量</div>
+                <div class="stat-value ${defenseClass}">${Math.floor(totalDefenseHP)} / ${maxDefenseHP}</div>
+                <div class="stat-bar">
+                    <div class="stat-bar-fill ${defenseClass}" style="width: ${defensePercent}%"></div>
+                </div>
+            </div>
+            <div class="unit-stat-card sub">
+                <div class="stat-row">
+                    <span class="stat-label">基地</span>
+                    <span class="stat-value-small">${Math.floor(gameState.base.hp)}/${gameState.base.maxHp} HP</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">城墙 (${totalWalls}座)</span>
+                    <span class="stat-value-small">+${wallHP} HP</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">威胁等级</span>
+                    <span class="stat-value-small">Lv.${gameState.threat.level}</span>
+                </div>
+            </div>
+        </div>`;
+
+    // --- Column 2: FIREPOWER (火力) ---
     const totalTurrets = gameState.combat.turretsOperational + gameState.combat.turretsDamaged;
-    if (totalTurrets > 0) {
-        const turretSelected = selectedUnit?.type === 'player' && selectedUnit?.id === 'turret';
-        const turretHpPercent = totalTurrets > 0 ? (gameState.combat.turretsOperational / totalTurrets) * 100 : 0;
-        const hasDamaged = gameState.combat.turretsDamaged > 0;
-        html += `
-            <div class="game-box unit-box friendly ${turretSelected ? 'selected' : ''} ${hasDamaged ? 'unit-damaged' : ''}"
-                 onclick="selectUnit('player', 1, 'turret')">
-                <div class="box-name">机枪塔</div>
-                <div class="box-value">${gameState.combat.turretsOperational}/${totalTurrets}</div>
-                <div class="unit-hp-bar">
-                    <div class="unit-hp-fill" style="width: ${turretHpPercent}%"></div>
+    const turretOperationalPercent = totalTurrets > 0 ? (gameState.combat.turretsOperational / totalTurrets) * 100 : 0;
+    const ammo = gameState.resources['ammo'] || { current: 0, max: 500 };
+    const ammoPercent = (ammo.current / ammo.max) * 100;
+    const turretSuppression = gameState.combat.turretsOperational * 10; // 10/s per turret
+
+    // Calculate if turrets are actively firing (pollution > passive suppression)
+    const drones = gameState.resources['drone'] || { current: 0, max: 10 };
+    const passiveSuppression = 20 + drones.current * 10; // Base + drones
+    const turretsAreFiring = pollution > passiveSuppression && gameState.combat.turretsOperational > 0;
+    const actualAmmoConsumption = turretsAreFiring ? gameState.combat.turretsOperational * 2 : 0;
+
+    html += `
+        <div class="battle-unit-column">
+            <div class="column-header firepower">🔫 火力</div>
+            <div class="unit-stat-card">
+                <div class="stat-title">总压制力</div>
+                <div class="stat-value">${suppression.toFixed(1)}/s</div>
+                <div class="stat-detail">
+                    <span class="neutral">基地: 20/s</span>
+                    <span class="neutral">无人机: ${(drones.current * 10).toFixed(0)}/s</span>
                 </div>
-            </div>`;
-    }
-
-    // 无人机 (only if any exist or capacity > 0)
-    const drones = gameState.resources['drone'];
-    if (drones && (drones.current > 0 || (drones.damaged || 0) > 0 || drones.max > 0)) {
-        const droneSelected = selectedUnit?.type === 'player' && selectedUnit?.id === 'drone';
-        const totalDrones = drones.current + (drones.damaged || 0);
-        const droneHpPercent = totalDrones > 0 ? (drones.current / totalDrones) * 100 : 0;
-        const hasDamaged = (drones.damaged || 0) > 0;
-        html += `
-            <div class="game-box unit-box friendly ${droneSelected ? 'selected' : ''} ${hasDamaged ? 'unit-damaged' : ''}"
-                 onclick="selectUnit('player', 2, 'drone')">
-                <div class="box-name">无人机</div>
-                <div class="box-value">${drones.current}/${drones.max}</div>
-                <div class="unit-hp-bar">
-                    <div class="unit-hp-fill" style="width: ${droneHpPercent}%"></div>
+            </div>
+            <div class="unit-stat-card sub">
+                <div class="stat-row">
+                    <span class="stat-label">机枪塔 (${gameState.combat.turretsOperational}座)</span>
+                    <span class="stat-value-small">${turretsAreFiring ? '开火中' : '待机'}</span>
                 </div>
-            </div>`;
-    }
+                <div class="stat-row">
+                    <span class="stat-label">弹药</span>
+                    <span class="stat-value-small">${Math.floor(ammo.current)}/${ammo.max}</span>
+                </div>
+                ${turretsAreFiring ? `<div class="stat-row">
+                    <span class="stat-label">弹药消耗</span>
+                    <span class="stat-value-small bad">-${actualAmmoConsumption}/s</span>
+                </div>` : ''}
+            </div>
+        </div>`;
 
-    html += '</div></div>';
+    // --- Column 3: LOGISTICS (后勤) ---
+    const repairPacks = gameState.resources['repair-pack'] || { current: 0, max: 50 };
+    const repairPercent = repairPacks.max > 0 ? (repairPacks.current / repairPacks.max) * 100 : 0;
 
-    // Enemy units section
-    html += `<div class="battle-section">
-        <div class="battle-section-title enemy">敌方单位</div>
-        <div class="boxes-container">`;
+    // Check if repair is active
+    const needsRepair = totalDefenseHP < maxDefenseHP;
+    const isRepairing = needsRepair && repairPacks.current > 0 && netThreat <= 0;
 
-    if (!gameState.combat.inBattle || gameState.combat.enemyUnits.length === 0) {
-        html += '<div style="color: var(--text-muted); font-size: 0.85rem; padding: 8px;">暂无敌人</div>';
-    } else {
-        gameState.combat.enemyUnits.forEach((unit, i) => {
-            const isSelected = selectedUnit?.type === 'enemy' && selectedUnit?.index === i;
-            const hpPercent = unit.maxHp > 0 ? (Math.max(0, unit.hp) / unit.maxHp) * 100 : 0;
-            html += `
-                <div class="game-box unit-box enemy ${isSelected ? 'selected' : ''}"
-                     onclick="selectUnit('enemy', ${i})">
-                    <div class="box-name">${unit.name}</div>
-                    <div class="box-value">x${unit.count}</div>
-                    <div class="unit-hp-bar enemy-hp-bar">
-                        <div class="unit-hp-fill enemy-hp-fill" style="width: ${hpPercent}%"></div>
-                    </div>
-                </div>`;
-        });
-    }
+    html += `
+        <div class="battle-unit-column">
+            <div class="column-header logistics">🔧 后勤</div>
+            <div class="unit-stat-card">
+                <div class="stat-title">修复状态</div>
+                <div class="stat-value">${isRepairing ? '修复中' : (needsRepair ? '待修复' : '完好')}</div>
+                <div class="stat-detail">
+                    <span class="neutral">修复包: ${Math.floor(repairPacks.current)}/${repairPacks.max}</span>
+                </div>
+            </div>
+            <div class="unit-stat-card sub">
+                <div class="stat-row">
+                    <span class="stat-label">无人机</span>
+                    <span class="stat-value-small">${Math.floor(drones.current)}个</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">修复速度</span>
+                    <span class="stat-value-small">${isRepairing ? '12.5 HP/s' : '0 HP/s'}</span>
+                </div>
+                ${needsRepair && !isRepairing && repairPacks.current <= 0 ? `<div class="stat-row">
+                    <span class="stat-label bad">缺少修复包!</span>
+                </div>` : ''}
+            </div>
+        </div>`;
 
-    html += '</div></div></div>';
+    html += '</div>'; // End battle-units-grid
 
     // Combat log
     html += `<div class="combat-log">
@@ -1575,8 +2115,21 @@ function updateResourceBoxes() {
             }
             if (rateEl) {
                 const net = getNetRate(id);
-                rateEl.textContent = `${net >= 0 ? '+' : ''}${net.toFixed(1)}/s`;
-                rateEl.className = 'box-rate ' + (net > 0.1 ? 'positive' : (net < -0.1 ? 'negative' : 'neutral'));
+                // Enhanced rate indicator with arrows and critical state
+                let rateClass = 'rate-indicator neutral';
+                let rateArrow = '';
+                if (net > 0.1) {
+                    rateClass = 'rate-indicator positive';
+                    rateArrow = '▲ ';
+                } else if (net < -5) {
+                    rateClass = 'rate-indicator critical';  // Severe deficit
+                    rateArrow = '▼ ';
+                } else if (net < -0.1) {
+                    rateClass = 'rate-indicator negative';
+                    rateArrow = '▼ ';
+                }
+                rateEl.textContent = `${rateArrow}${net >= 0 ? '+' : ''}${net.toFixed(1)}/s`;
+                rateEl.className = 'box-rate ' + rateClass;
             }
         }
     }
@@ -1822,7 +2375,60 @@ function updateInfoPanelValues() {
     }
 }
 
+// ===== FLOATING TEXT SYSTEM (Juice) =====
+function spawnFloatingText(x, y, text, color = '#fff', isCritical = false) {
+    // Node.js environment: skip
+    if (typeof document === 'undefined') return;
+
+    const el = document.createElement('div');
+    el.className = 'float-text' + (isCritical ? ' critical' : '');
+    el.textContent = text;
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+    el.style.color = color;
+    document.body.appendChild(el);
+
+    // Remove after animation ends
+    setTimeout(() => el.remove(), isCritical ? 1200 : 1000);
+}
+
+// Spawn floating text at element center
+function spawnFloatingTextAtElement(element, text, color = '#fff', isCritical = false) {
+    if (!element || typeof document === 'undefined') return;
+    const rect = element.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    spawnFloatingText(x, y, text, color, isCritical);
+}
+
+// ===== DANGER OVERLAY MANAGEMENT =====
+function updateDangerOverlay() {
+    if (typeof document === 'undefined') return;
+
+    let overlay = document.getElementById('screen-danger-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'screen-danger-overlay';
+        overlay.className = 'screen-danger-overlay';
+        document.body.appendChild(overlay);
+    }
+
+    // Show overlay when threat is overwhelming
+    const netThreat = gameState.combat.netThreat || 0;
+    const isInDanger = netThreat > 0 && gameState.combat.inBattle;
+    overlay.classList.toggle('active', isInDanger);
+}
+
 function showToast(message, type = 'info') {
+    // Node.js environment: just log to console
+    if (typeof document === 'undefined') {
+        // Suppress logs in headless mode unless it's an error
+        if (type === 'error') {
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+        return;
+    }
+
     const container = document.getElementById('toast-container');
     if (!container) {
         console.log(`[${type.toUpperCase()}] ${message}`);
@@ -1845,4 +2451,166 @@ function showToast(message, type = 'info') {
 // START GAME
 // ============================================================
 
-window.addEventListener('DOMContentLoaded', init);
+// Browser environment: auto-init on DOM load
+if (typeof window !== 'undefined') {
+    window.addEventListener('DOMContentLoaded', init);
+}
+
+// ============================================================
+// NODE.JS MODULE EXPORTS (for headless testing)
+// ============================================================
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        // Game state and data
+        getGameState: () => gameState,
+        getGameData: () => GameData,
+
+        // Initialize with custom data
+        initHeadless: function(data) {
+            GameData = data;
+            // Initialize resources
+            for (const [id, resData] of Object.entries(GameData.resources)) {
+                gameState.resources[id] = {
+                    current: 0,
+                    max: resData.baseStorage || 500
+                };
+            }
+            // Initialize drone damaged tracking
+            if (gameState.resources['drone']) {
+                gameState.resources['drone'].damaged = 0;
+            }
+            // Initialize buildings
+            for (const id of Object.keys(GameData.buildings)) {
+                gameState.buildings[id] = 0;
+            }
+            // Initialize stats
+            for (const id of Object.keys(GameData.resources)) {
+                gameState.stats.totalProduction[id] = 0;
+                gameState.stats.totalConsumption[id] = 0;
+            }
+        },
+
+        // Reset game state for new test
+        resetGame: function() {
+            // Reset resources
+            for (const [id, resData] of Object.entries(GameData.resources)) {
+                gameState.resources[id] = {
+                    current: 0,
+                    max: resData.baseStorage || 500
+                };
+            }
+            if (gameState.resources['drone']) {
+                gameState.resources['drone'].damaged = 0;
+            }
+            // Reset buildings
+            for (const id of Object.keys(GameData.buildings)) {
+                gameState.buildings[id] = 0;
+            }
+            // Reset stats
+            for (const id of Object.keys(GameData.resources)) {
+                gameState.stats.totalProduction[id] = 0;
+                gameState.stats.totalConsumption[id] = 0;
+            }
+            // Reset combat
+            gameState.combat = {
+                inBattle: false,
+                playerUnits: [],
+                enemyUnits: [],
+                log: [],
+                turretsOperational: 0,
+                turretsDamaged: 0,
+                // Flow combat state (V2.0)
+                pollution: 0,
+                suppression: 0,
+                netThreat: 0,
+                defenseHP: 0,
+                defenseMaxHP: 0,
+                turretRepairProgress: 0,
+                droneRepairProgress: 0
+            };
+            // Reset threat
+            gameState.threat = {
+                level: 0,
+                timer: 60,
+                timerMax: 60,
+                minThreshold: 2
+            };
+            // Reset base
+            gameState.base = {
+                hp: 1000,
+                maxHp: 1000,
+                energyGeneration: 10
+            };
+            // Reset research
+            gameState.research = {
+                completed: []
+            };
+        },
+
+        // Resource management
+        getResource,
+        getResourceMax,
+        addResource,
+        removeResource,
+        canAfford,
+        spendResources,
+        getNetRate,
+        getProductionRate,
+        getConsumptionRate,
+
+        // Space management
+        getSpaceUsed,
+        getSpaceMax,
+        getSpaceAvailable,
+
+        // Building management
+        getBuildingCount,
+
+        // Core simulation functions
+        resetTickStats,
+        processBuildings,
+        updateThreat,
+        spawnEnemyWave,
+        processCombat,
+
+        // Flow combat (V2.0)
+        getTotalPollutionRate,
+        getSuppressionRate,
+        processCombatFlow,
+        processRepairFlow,
+
+        // Combat helpers
+        getPlayerAttackPower,
+        getEnemyAttackPower,
+        applyDamageToPlayer,
+        getPlayerTotalHP,
+        getPlayerMaxHP,
+        getEnemyTotalHP,
+        getEnemyMaxHP,
+
+        // Direct state access for tests
+        setResource: function(id, value) {
+            if (gameState.resources[id]) {
+                gameState.resources[id].current = value;
+            }
+        },
+        setBuilding: function(id, count) {
+            gameState.buildings[id] = count;
+            // Sync turret count with combat state
+            if (id === 'turret-basic') {
+                gameState.combat.turretsOperational = count;
+            }
+        },
+        setThreatLevel: function(level) {
+            gameState.threat.level = level;
+        },
+        setBaseHP: function(hp) {
+            gameState.base.hp = hp;
+        },
+
+        // Constants
+        TICK_RATE,
+        TICK_SECONDS
+    };
+}

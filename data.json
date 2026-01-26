@@ -98,6 +98,12 @@
       "name": "修复包",
       "category": "material",
       "baseStorage": 50
+    },
+    "ammo": {
+      "id": "ammo",
+      "name": "弹药",
+      "category": "military",
+      "baseStorage": 500
     }
   },
   "buildings": {
@@ -116,7 +122,8 @@
         "iron-ore": 2
       },
       "cycleTime": 0.5,
-      "requiresTech": null
+      "requiresTech": null,
+      "pollution": 2
     },
     "miner-copper": {
       "id": "miner-copper",
@@ -133,7 +140,8 @@
         "copper-ore": 2
       },
       "cycleTime": 0.5,
-      "requiresTech": null
+      "requiresTech": null,
+      "pollution": 2
     },
     "miner-coal": {
       "id": "miner-coal",
@@ -150,7 +158,8 @@
         "coal": 2
       },
       "cycleTime": 0.5,
-      "requiresTech": null
+      "requiresTech": null,
+      "pollution": 2
     },
     "miner-stone": {
       "id": "miner-stone",
@@ -167,7 +176,8 @@
         "stone": 2
       },
       "cycleTime": 0.5,
-      "requiresTech": null
+      "requiresTech": null,
+      "pollution": 2
     },
     "furnace-iron-plate": {
       "id": "furnace-iron-plate",
@@ -185,7 +195,8 @@
         "iron-plate": 1
       },
       "cycleTime": 0.5,
-      "requiresTech": null
+      "requiresTech": null,
+      "pollution": 3
     },
     "furnace-copper-plate": {
       "id": "furnace-copper-plate",
@@ -203,7 +214,8 @@
         "copper-plate": 1
       },
       "cycleTime": 0.5,
-      "requiresTech": null
+      "requiresTech": null,
+      "pollution": 3
     },
     "furnace-steel": {
       "id": "furnace-steel",
@@ -223,7 +235,8 @@
         "steel": 1
       },
       "cycleTime": 0.5,
-      "requiresTech": "steel-smelting"
+      "requiresTech": "steel-smelting",
+      "pollution": 5
     },
     "assembler-gear": {
       "id": "assembler-gear",
@@ -241,7 +254,8 @@
         "gear": 1
       },
       "cycleTime": 0.5,
-      "requiresTech": null
+      "requiresTech": null,
+      "pollution": 2
     },
     "assembler-circuit": {
       "id": "assembler-circuit",
@@ -261,7 +275,8 @@
         "circuit": 1
       },
       "cycleTime": 0.5,
-      "requiresTech": "basic-electronics"
+      "requiresTech": "basic-electronics",
+      "pollution": 2
     },
     "assembler-science-red": {
       "id": "assembler-science-red",
@@ -281,7 +296,8 @@
         "science-red": 1
       },
       "cycleTime": 1.0,
-      "requiresTech": null
+      "requiresTech": null,
+      "pollution": 3
     },
     "assembler-science-green": {
       "id": "assembler-science-green",
@@ -302,7 +318,8 @@
         "science-green": 1
       },
       "cycleTime": 1.5,
-      "requiresTech": "automation-1"
+      "requiresTech": "automation-1",
+      "pollution": 4
     },
     "assembler-science-blue": {
       "id": "assembler-science-blue",
@@ -323,7 +340,8 @@
         "science-blue": 1
       },
       "cycleTime": 2.0,
-      "requiresTech": "basic-electronics"
+      "requiresTech": "advanced-automation",
+      "pollution": 5
     },
     "generator-coal": {
       "id": "generator-coal",
@@ -341,7 +359,8 @@
         "energy": 20
       },
       "cycleTime": 0.5,
-      "requiresTech": null
+      "requiresTech": null,
+      "pollution": 10
     },
     "generator-solar": {
       "id": "generator-solar",
@@ -360,6 +379,23 @@
       "cycleTime": 0.5,
       "requiresTech": "solar-energy"
     },
+    "generator-wind": {
+      "id": "generator-wind",
+      "name": "风力发电机",
+      "category": "power",
+      "spaceCost": 4,
+      "buildCost": {
+        "iron-plate": 5,
+        "gear": 5,
+        "circuit": 2
+      },
+      "consumes": {},
+      "produces": {
+        "energy": 2.5
+      },
+      "cycleTime": 0.5,
+      "requiresTech": null
+    },
     "turret-basic": {
       "id": "turret-basic",
       "name": "机枪塔",
@@ -376,8 +412,30 @@
       "requiresTech": "military-1",
       "defense": {
         "hp": 100,
-        "attack": 5
+        "attack": 5,
+        "ammoPerSecond": 2,
+        "suppressionPerAmmo": 5
       }
+    },
+    "assembler-ammo": {
+      "id": "assembler-ammo",
+      "name": "弹药厂",
+      "category": "crafting",
+      "spaceCost": 4,
+      "buildCost": {
+        "iron-plate": 20,
+        "gear": 10
+      },
+      "consumes": {
+        "iron-plate": 1,
+        "coal": 1,
+        "energy": 4
+      },
+      "produces": {
+        "ammo": 5
+      },
+      "cycleTime": 1.0,
+      "requiresTech": "military-1"
     },
     "factory-drone-gun": {
       "id": "factory-drone-gun",
@@ -398,7 +456,8 @@
         "drone": 1
       },
       "cycleTime": 2.0,
-      "requiresTech": "military-2"
+      "requiresTech": "military-2",
+      "pollution": 4
     },
     "assembler-repair-pack": {
       "id": "assembler-repair-pack",
@@ -437,6 +496,41 @@
       "special": "expander",
       "expandAmount": 50,
       "threatIncrease": 1
+    },
+    "wall-stone": {
+      "id": "wall-stone",
+      "name": "石墙",
+      "category": "defense",
+      "spaceCost": 1,
+      "buildCost": {
+        "stone": 20
+      },
+      "consumes": {},
+      "produces": {},
+      "cycleTime": 0,
+      "requiresTech": null,
+      "defense": {
+        "hp": 50,
+        "armor": 0
+      }
+    },
+    "wall-steel": {
+      "id": "wall-steel",
+      "name": "钢墙",
+      "category": "defense",
+      "spaceCost": 1,
+      "buildCost": {
+        "steel": 10,
+        "iron-plate": 5
+      },
+      "consumes": {},
+      "produces": {},
+      "cycleTime": 0,
+      "requiresTech": "steel-smelting",
+      "defense": {
+        "hp": 150,
+        "armor": 5
+      }
     }
   },
   "technologies": {
@@ -456,17 +550,30 @@
     "basic-electronics": {
       "id": "basic-electronics",
       "name": "电子学",
-      "description": "解锁电路和蓝包生产",
+      "description": "解锁电路生产",
+      "prerequisites": [],
+      "cost": {
+        "science-red": 15
+      },
+      "tier": 1,
+      "unlocks": [
+        "assembler-circuit"
+      ]
+    },
+    "advanced-automation": {
+      "id": "advanced-automation",
+      "name": "自动化2",
+      "description": "解锁蓝包生产",
       "prerequisites": [
-        "automation-1"
+        "automation-1",
+        "basic-electronics"
       ],
       "cost": {
-        "science-red": 15,
-        "science-green": 10
+        "science-red": 20,
+        "science-green": 15
       },
       "tier": 2,
       "unlocks": [
-        "assembler-circuit",
         "assembler-science-blue"
       ]
     },
